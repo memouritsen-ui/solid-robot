@@ -140,6 +140,52 @@ async def get_research_status(session_id: str) -> ResearchStatus:
     )
 
 
+@router.post("/{session_id}/approve")
+async def approve_research_plan(session_id: str) -> dict[str, Any]:
+    """Approve research plan and allow agent to proceed.
+
+    Used when agent requires explicit approval before continuing
+    (e.g., after presenting research plan or clarification).
+
+    Args:
+        session_id: Session identifier
+
+    Returns:
+        dict: Approval confirmation
+
+    Raises:
+        HTTPException: If session not found or not waiting
+    """
+    if session_id not in active_sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = active_sessions[session_id]
+    state = session["state"]
+
+    # Check if waiting for approval
+    if not state.get("awaiting_approval", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Session not waiting for approval"
+        )
+
+    # Grant approval
+    state["awaiting_approval"] = False
+    state["approval_granted"] = True
+
+    logger.info(
+        "research_plan_approved",
+        session_id=session_id,
+        current_phase=state.get("current_phase")
+    )
+
+    return {
+        "session_id": session_id,
+        "status": "approved",
+        "message": "Research approved, continuing workflow"
+    }
+
+
 @router.post("/{session_id}/stop")
 async def stop_research(session_id: str) -> dict[str, Any]:
     """Stop a running research session early.
