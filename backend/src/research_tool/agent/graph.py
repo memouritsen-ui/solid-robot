@@ -1,6 +1,9 @@
 """LangGraph research workflow definition."""
 
-from langgraph.checkpoint.sqlite import SqliteSaver
+from typing import Any
+
+from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from research_tool.models.state import ResearchState
@@ -10,6 +13,7 @@ from .nodes import (
     clarify_node,
     collect_node,
     evaluate_node,
+    export_node,
     plan_node,
     process_node,
     synthesize_node,
@@ -30,7 +34,9 @@ def should_continue_research(state: ResearchState) -> str:
     return "continue"
 
 
-def create_research_graph():  # type: ignore[no-untyped-def]
+def create_research_graph(
+    checkpointer: BaseCheckpointSaver[Any] | None = None
+) -> Any:
     """Create the research workflow graph.
 
     Workflow:
@@ -42,6 +48,11 @@ def create_research_graph():  # type: ignore[no-untyped-def]
     6. Evaluate saturation
     7. If not saturated → go back to collect
     8. If saturated → synthesize report
+    9. Export final report
+
+    Args:
+        checkpointer: Optional checkpoint saver for persistence.
+                     Defaults to MemorySaver (in-memory, no persistence).
 
     Returns:
         Compiled LangGraph workflow
@@ -57,6 +68,7 @@ def create_research_graph():  # type: ignore[no-untyped-def]
     workflow.add_node("analyze", analyze_node)
     workflow.add_node("evaluate", evaluate_node)
     workflow.add_node("synthesize", synthesize_node)
+    workflow.add_node("export", export_node)
 
     # Define linear edges
     workflow.set_entry_point("clarify")
@@ -76,8 +88,11 @@ def create_research_graph():  # type: ignore[no-untyped-def]
         }
     )
 
-    workflow.add_edge("synthesize", END)
+    workflow.add_edge("synthesize", "export")
+    workflow.add_edge("export", END)
 
-    # Add checkpointing for resumability
-    with SqliteSaver.from_conn_string("./data/checkpoints.db") as checkpointer:
-        return workflow.compile(checkpointer=checkpointer)
+    # Use provided checkpointer or default to MemorySaver
+    if checkpointer is None:
+        checkpointer = MemorySaver()
+
+    return workflow.compile(checkpointer=checkpointer)

@@ -29,7 +29,7 @@ async def run_research_workflow(session_id: str, initial_state: dict[str, Any]) 
         logger.info("research_workflow_start", session_id=session_id)
 
         # Create graph
-        graph = create_research_graph()  # type: ignore[no-untyped-call]
+        graph = create_research_graph()
 
         # Run workflow
         config = {"configurable": {"thread_id": session_id}}
