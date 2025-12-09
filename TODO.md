@@ -345,13 +345,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ---
 
-## PHASE 5: INTELLIGENCE FEATURES ❌ NOT STARTED
+## PHASE 5: INTELLIGENCE FEATURES 🚧 IN PROGRESS
 
 ### Domain Detection
-- [ ] #205 Create /backend/src/research_tool/agent/decisions/domain_detector.py
-- [ ] #206 Implement keyword-based domain detection
-- [ ] #207 Implement LLM-based domain detection (fallback)
-- [ ] #208 Test: Detects medical, regulatory, CI domains
+- [x] #205 Create /backend/src/research_tool/agent/decisions/domain_detector.py -- IMPLEMENTED 2025-12-09
+- [x] #206 Implement keyword-based domain detection -- IMPLEMENTED 2025-12-09
+- [x] #207 Implement LLM-based domain detection (fallback) -- PLACEHOLDER 2025-12-09
+- [x] #208 Test: Detects medical, regulatory, CI domains -- 20 tests passing 2025-12-09
 
 ### Auto-Configuration
 - [ ] #209 Create /backend/data/domain_configs/medical.json
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 0/35 | ❌ NOT STARTED |
+| Phase 5: Intelligence | #205-239 | 4/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~200 (~65%)
-**Tests**: 307 passing (2025-12-09)
+**Completed**: ~204 (~66%)
+**Tests**: 327 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
