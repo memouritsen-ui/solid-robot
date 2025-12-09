@@ -7,7 +7,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from research_tool.api.routes import research
-from research_tool.api.websocket import chat_websocket
+from research_tool.api.websocket import chat_websocket, progress_handler
 from research_tool.core import Settings, get_logger
 
 settings = Settings()
@@ -69,6 +69,17 @@ async def websocket_chat(websocket: WebSocket) -> None:
         websocket: WebSocket connection from client.
     """
     await chat_websocket(websocket)
+
+
+@app.websocket("/ws/research/{session_id}")
+async def websocket_research_progress(websocket: WebSocket, session_id: str) -> None:
+    """WebSocket endpoint for research progress updates.
+
+    Args:
+        websocket: WebSocket connection from client.
+        session_id: Research session identifier.
+    """
+    await progress_handler.connect(session_id, websocket)
 
 
 if __name__ == "__main__":

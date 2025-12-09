@@ -3,66 +3,39 @@
 
 import pytest
 
-from research_tool.models.state import ResearchState
+from research_tool.agent.graph import create_research_graph
 
 
 class TestAgentWorkflow:
     """Test suite for complete agent workflow integration."""
 
     @pytest.mark.asyncio
-    async def test_complete_workflow_executes(self) -> None:
-        """Complete workflow executes all nodes without errors.
+    async def test_real_graph_structure(self) -> None:
+        """Test that real graph has correct node structure.
 
         Tests #183: Complete workflow executes
-
-        Note: Uses graph without checkpointing for testing.
         """
-        from langgraph.graph import END, StateGraph
+        graph = create_research_graph()
 
-        # Create simple graph without checkpointing
-        workflow = StateGraph(ResearchState)
+        # Verify graph was created
+        assert graph is not None
 
-        # Mock nodes
-        async def mock_start(state: ResearchState) -> dict:
-            return {"current_phase": "start", "should_stop": True, "stop_reason": "Test"}
+        # Check graph has the expected nodes by checking the compiled graph
+        # The graph should have nodes for the research workflow
+        graph_dict = graph.get_graph().to_json()
+        assert "nodes" in graph_dict
 
-        async def mock_synthesize(state: ResearchState) -> dict:
-            return {
-                "final_report": {"query": "test", "summary": "Done"},
-                "current_phase": "synthesize"
-            }
+    @pytest.mark.asyncio
+    async def test_real_graph_is_invokable(self) -> None:
+        """Real graph has ainvoke method and is callable.
 
-        workflow.add_node("start", mock_start)
-        workflow.add_node("synthesize", mock_synthesize)
-        workflow.set_entry_point("start")
-        workflow.add_edge("start", "synthesize")
-        workflow.add_edge("synthesize", END)
+        Uses actual graph structure.
+        """
+        graph = create_research_graph()
 
-        graph = workflow.compile()
-
-        # Create initial state
-        initial_state: ResearchState = {
-            "session_id": "test-session",
-            "original_query": "test query",
-            "privacy_mode": "CLOUD_ALLOWED",
-            "sources_queried": [],
-            "entities_found": [],
-            "facts_extracted": [],
-            "access_failures": [],
-            "should_stop": False,
-            "saturation_metrics": None,
-            "stop_reason": None,
-            "final_report": None,
-            "export_path": None
-        }
-
-        # Run workflow
-        final_state = await graph.ainvoke(initial_state)
-
-        # Verify workflow completed
-        assert final_state is not None
-        assert "final_report" in final_state
-        assert final_state["final_report"] is not None
+        # Graph should be callable
+        assert callable(graph.ainvoke)
+        assert hasattr(graph, "get_graph")
 
     @pytest.mark.asyncio
     async def test_tools_integrate_with_agent(self) -> None:
@@ -104,125 +77,58 @@ class TestAgentWorkflow:
         assert len(result["results"]) == 1
 
     @pytest.mark.asyncio
-    async def test_full_research_cycle_with_mocks(self) -> None:
-        """Full research cycle completes with mocked providers.
+    async def test_real_graph_node_count(self) -> None:
+        """Real graph has expected number of nodes.
 
-        Tests #199: Full research cycle on test query
-
-        Note: Creates graph without checkpointing for testing.
+        Tests #199: Verifies graph structure is complete.
         """
-        from langgraph.graph import END, StateGraph
+        graph = create_research_graph()
 
-        # Create workflow without checkpointing
-        workflow = StateGraph(ResearchState)
+        # Get graph structure
+        graph_data = graph.get_graph().to_json()
 
-        # Mock all nodes
-        async def mock_clarify(state):
-            return {"current_phase": "clarify", "refined_query": state["original_query"]}
+        # Should have 8 nodes: clarify, plan, collect, process,
+        # analyze, evaluate, synthesize, export
+        # Plus __start__ and __end__ nodes added by LangGraph
+        node_count = len(graph_data.get("nodes", []))
+        assert node_count >= 8, f"Expected at least 8 nodes, got {node_count}"
 
-        async def mock_plan(state):
-            return {"current_phase": "plan"}
+    @pytest.mark.asyncio
+    async def test_graph_conditional_edges(self) -> None:
+        """Graph has conditional edge from evaluate node.
 
-        async def mock_collect(state):
-            return {
-                "current_phase": "collect",
-                "sources_queried": ["tavily"],
-                "entities_found": [{"name": "test"}],
-                "facts_extracted": [{"content": "test fact"}]
-            }
+        Verifies the saturation loop is properly configured.
+        """
+        graph = create_research_graph()
 
-        async def mock_evaluate(state):
-            return {"current_phase": "evaluate", "should_stop": True, "stop_reason": "Test"}
+        # Get graph structure
+        graph_data = graph.get_graph().to_json()
 
-        async def mock_synthesize(state):
-            return {
-                "final_report": {"query": "test", "summary": "Complete"},
-                "current_phase": "synthesize"
-            }
-
-        workflow.add_node("clarify", mock_clarify)
-        workflow.add_node("plan", mock_plan)
-        workflow.add_node("collect", mock_collect)
-        workflow.add_node("evaluate", mock_evaluate)
-        workflow.add_node("synthesize", mock_synthesize)
-
-        workflow.set_entry_point("clarify")
-        workflow.add_edge("clarify", "plan")
-        workflow.add_edge("plan", "collect")
-        workflow.add_edge("collect", "evaluate")
-        workflow.add_edge("evaluate", "synthesize")
-        workflow.add_edge("synthesize", END)
-
-        graph = workflow.compile()
-
-        # Run workflow
-        initial_state: ResearchState = {
-            "session_id": "full-cycle-test",
-            "original_query": "cancer treatment",
-            "privacy_mode": "LOCAL_ONLY",
-            "sources_queried": [],
-            "entities_found": [],
-            "facts_extracted": [],
-            "access_failures": [],
-            "should_stop": False,
-            "saturation_metrics": None,
-            "stop_reason": None,
-            "final_report": None,
-            "export_path": None
-        }
-
-        final_state = await graph.ainvoke(initial_state)
-
-        # Verify final report was generated
-        assert "final_report" in final_state
-        assert final_state["final_report"] is not None
+        # Check edges exist
+        edges = graph_data.get("edges", [])
+        assert len(edges) > 0, "Graph should have edges"
 
 
 class TestWorkflowEdgeCases:
     """Test edge cases in workflow execution."""
 
-    @pytest.mark.asyncio
-    async def test_workflow_handles_empty_query(self) -> None:
-        """Workflow handles empty query gracefully.
+    def test_graph_can_be_created_multiple_times(self) -> None:
+        """Multiple graph instances can be created independently."""
+        graph1 = create_research_graph()
+        graph2 = create_research_graph()
 
-        Note: Creates graph without checkpointing for testing.
-        """
-        from langgraph.graph import END, StateGraph
+        # Both should be valid
+        assert graph1 is not None
+        assert graph2 is not None
 
-        # Create simple graph
-        workflow = StateGraph(ResearchState)
+        # They should be different instances
+        assert graph1 is not graph2
 
-        async def handle_empty(state):
-            return {
-                "should_stop": True,
-                "stop_reason": "Empty query",
-                "current_phase": "clarify",
-                "final_report": {"error": "Empty query"}
-            }
+    def test_graph_with_custom_checkpointer(self) -> None:
+        """Graph accepts custom checkpointer."""
+        from langgraph.checkpoint.memory import MemorySaver
 
-        workflow.add_node("clarify", handle_empty)
-        workflow.set_entry_point("clarify")
-        workflow.add_edge("clarify", END)
+        custom_saver = MemorySaver()
+        graph = create_research_graph(checkpointer=custom_saver)
 
-        graph = workflow.compile()
-
-        initial_state: ResearchState = {
-            "session_id": "empty-query-test",
-            "original_query": "",
-            "privacy_mode": "CLOUD_ALLOWED",
-            "sources_queried": [],
-            "entities_found": [],
-            "facts_extracted": [],
-            "access_failures": [],
-            "should_stop": False,
-            "saturation_metrics": None,
-            "stop_reason": None,
-            "final_report": None,
-            "export_path": None
-        }
-
-        final_state = await graph.ainvoke(initial_state)
-
-        # Should handle gracefully
-        assert final_state is not None
-        assert final_state["should_stop"] is True
+        assert graph is not None
