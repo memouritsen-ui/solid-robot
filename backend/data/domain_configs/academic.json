@@ -1,0 +1,39 @@
+{
+  "domain": "academic",
+  "description": "Configuration for general academic research",
+  "primary_sources": ["semantic_scholar", "arxiv"],
+  "secondary_sources": ["pubmed", "unpaywall", "playwright_crawler"],
+  "academic_required": true,
+  "verification_threshold": 0.7,
+  "keywords": [
+    "research",
+    "study",
+    "paper",
+    "journal",
+    "peer-reviewed",
+    "publication",
+    "citation",
+    "methodology",
+    "hypothesis",
+    "thesis",
+    "dissertation",
+    "scholar",
+    "academic",
+    "university",
+    "professor",
+    "experiment",
+    "analysis"
+  ],
+  "excluded_sources": [],
+  "saturation_thresholds": {
+    "new_entities_ratio": 0.05,
+    "new_facts_ratio": 0.05,
+    "source_coverage": 0.95,
+    "citation_circularity": 0.80
+  },
+  "quality_requirements": {
+    "min_source_credibility": 0.6,
+    "require_peer_review": true,
+    "max_source_age_years": 15
+  }
+}

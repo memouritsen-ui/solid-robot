@@ -1,0 +1,40 @@
+{
+  "domain": "competitive_intelligence",
+  "description": "Configuration for competitive intelligence/business research",
+  "primary_sources": ["tavily", "exa", "brave", "playwright_crawler"],
+  "secondary_sources": ["news_api"],
+  "academic_required": false,
+  "verification_threshold": 0.6,
+  "keywords": [
+    "company",
+    "market",
+    "competitor",
+    "funding",
+    "product",
+    "revenue",
+    "startup",
+    "acquisition",
+    "valuation",
+    "business",
+    "industry",
+    "investment",
+    "stock",
+    "profit",
+    "sales",
+    "enterprise",
+    "corporation",
+    "shareholder"
+  ],
+  "excluded_sources": [],
+  "saturation_thresholds": {
+    "new_entities_ratio": 0.05,
+    "new_facts_ratio": 0.05,
+    "source_coverage": 0.95,
+    "citation_circularity": 0.80
+  },
+  "quality_requirements": {
+    "min_source_credibility": 0.5,
+    "require_peer_review": false,
+    "max_source_age_years": 2
+  }
+}

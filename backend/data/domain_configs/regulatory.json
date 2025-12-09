@@ -1,0 +1,40 @@
+{
+  "domain": "regulatory",
+  "description": "Configuration for regulatory/compliance research",
+  "primary_sources": ["tavily", "brave", "playwright_crawler"],
+  "secondary_sources": ["pubmed"],
+  "academic_required": false,
+  "verification_threshold": 0.9,
+  "keywords": [
+    "regulation",
+    "compliance",
+    "FDA",
+    "policy",
+    "law",
+    "requirement",
+    "standard",
+    "guideline",
+    "legal",
+    "legislation",
+    "government",
+    "rule",
+    "mandate",
+    "authority",
+    "approval",
+    "license",
+    "permit",
+    "audit"
+  ],
+  "excluded_sources": [],
+  "saturation_thresholds": {
+    "new_entities_ratio": 0.03,
+    "new_facts_ratio": 0.03,
+    "source_coverage": 0.98,
+    "citation_circularity": 0.70
+  },
+  "quality_requirements": {
+    "min_source_credibility": 0.8,
+    "require_peer_review": false,
+    "max_source_age_years": 5
+  }
+}
