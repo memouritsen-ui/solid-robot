@@ -1,5 +1,7 @@
 """Evaluation node - calculate saturation metrics and determine if research should continue."""
 
+from typing import Any
+
 from research_tool.agent.decisions.saturation import calculate_saturation, should_stop
 from research_tool.core.logging import get_logger
 from research_tool.models.state import ResearchState
@@ -7,7 +9,7 @@ from research_tool.models.state import ResearchState
 logger = get_logger(__name__)
 
 
-async def evaluate_node(state: ResearchState) -> dict:
+async def evaluate_node(state: ResearchState) -> dict[str, Any]:
     """Evaluate research progress and calculate saturation metrics.
 
     Anti-pattern prevention:

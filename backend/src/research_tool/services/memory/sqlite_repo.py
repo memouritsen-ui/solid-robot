@@ -2,12 +2,14 @@
 
 import json
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 try:
     import aiosqlite
 except ImportError:
     # Fallback for when aiosqlite is not installed yet
-    aiosqlite = None
+    aiosqlite: ModuleType | None = None  # type: ignore[no-redef]
 
 
 SCHEMA_SQL = """
@@ -74,7 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_failures_url ON access_failures(url);
 class SQLiteRepository:
     """SQLite implementation for structured data storage."""
 
-    def __init__(self, db_path: str = "./data/research.db"):
+    def __init__(self, db_path: str = "./data/research.db") -> None:
         """Initialize SQLite repository.
 
         Args:
@@ -89,7 +91,7 @@ class SQLiteRepository:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Create tables if not exist."""
         async with aiosqlite.connect(self.db_path) as db:
             await db.executescript(SCHEMA_SQL)
@@ -126,7 +128,7 @@ class SQLiteRepository:
         self,
         session_id: str,
         status: str,
-        saturation_metrics: dict | None = None,
+        saturation_metrics: dict[str, Any] | None = None,
         report_path: str | None = None
     ) -> None:
         """Update research session status.
@@ -198,7 +200,7 @@ class SQLiteRepository:
                 )
 
             row = await cursor.fetchone()
-            return row[0] if row and row[0] is not None else None
+            return float(row[0]) if row and row[0] is not None else None
 
     async def set_source_effectiveness(
         self,
@@ -260,7 +262,7 @@ class SQLiteRepository:
         Returns:
             list[tuple[str, float]]: List of (source_name, score) tuples, sorted descending
         """
-        scores = []
+        scores: list[tuple[str, float]] = []
         for source in available_sources:
             score = await self.get_source_effectiveness(source, domain)
             if score is None:
@@ -318,7 +320,7 @@ class SQLiteRepository:
                 (url,)
             )
             row = await cursor.fetchone()
-            return row[0] > 0 if row else False
+            return bool(row[0] > 0) if row else False
 
     async def get_failed_urls(self) -> list[str]:
         """Get list of all known failed URLs.
@@ -331,10 +333,10 @@ class SQLiteRepository:
                 "SELECT url FROM access_failures"
             )
             rows = await cursor.fetchall()
-            return [row[0] for row in rows]
+            return [str(row[0]) for row in rows]
 
     # Domain Config Overrides
-    async def get_domain_config(self, domain: str) -> dict | None:
+    async def get_domain_config(self, domain: str) -> dict[str, Any] | None:
         """Get learned configuration overrides for a domain.
 
         Args:

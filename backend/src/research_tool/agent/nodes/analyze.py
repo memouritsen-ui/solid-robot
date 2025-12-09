@@ -1,12 +1,14 @@
 """Analysis node - cross-verify and score confidence."""
 
+from typing import Any
+
 from research_tool.core.logging import get_logger
 from research_tool.models.state import ResearchState
 
 logger = get_logger(__name__)
 
 
-async def analyze_node(state: ResearchState) -> dict:
+async def analyze_node(state: ResearchState) -> dict[str, Any]:
     """Analyze facts for cross-verification and confidence scoring.
 
     Args:

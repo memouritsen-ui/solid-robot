@@ -1,6 +1,7 @@
 """Semantic Scholar search provider with strict rate limiting."""
 
 from datetime import datetime
+from typing import Any
 
 import httpx
 
@@ -32,8 +33,8 @@ class SemanticScholarProvider(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search Semantic Scholar with strict rate limiting.
 
         Args:
@@ -46,7 +47,7 @@ class SemanticScholarProvider(SearchProvider):
         """
         await rate_limiter.acquire(self.name, self.requests_per_second)
 
-        params = {
+        params: dict[str, str | int] = {
             "query": query,
             "limit": min(max_results, 100),  # API max is 100
             "fields": "title,abstract,url,authors,year,citationCount,venue,publicationTypes"
@@ -55,9 +56,9 @@ class SemanticScholarProvider(SearchProvider):
         # Add optional filters
         if filters:
             if "year" in filters:
-                params["year"] = filters["year"]
+                params["year"] = str(filters["year"])
             if "fieldsOfStudy" in filters:
-                params["fieldsOfStudy"] = filters["fieldsOfStudy"]
+                params["fieldsOfStudy"] = str(filters["fieldsOfStudy"])
 
         async with httpx.AsyncClient() as client:
             try:

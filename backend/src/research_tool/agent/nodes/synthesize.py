@@ -1,12 +1,14 @@
 """Synthesis node - generate final research report."""
 
+from typing import Any
+
 from research_tool.core.logging import get_logger
 from research_tool.models.state import ResearchState
 
 logger = get_logger(__name__)
 
 
-async def synthesize_node(state: ResearchState) -> dict:
+async def synthesize_node(state: ResearchState) -> dict[str, Any]:
     """Synthesize research findings into final report.
 
     Anti-pattern prevention:

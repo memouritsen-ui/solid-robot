@@ -1,5 +1,6 @@
 """Combined memory repository using LanceDB and SQLite."""
 
+from typing import Any
 
 from .lance_repo import LanceDBRepository
 from .learning import SourceLearning
@@ -31,7 +32,7 @@ class CombinedMemoryRepository(MemoryRepository):
         self.learning = SourceLearning(self.sqlite)
         self._initialized = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize both databases."""
         if not self._initialized:
             await self.sqlite.initialize()
@@ -41,7 +42,7 @@ class CombinedMemoryRepository(MemoryRepository):
     async def store_document(
         self,
         content: str,
-        metadata: dict,
+        metadata: dict[str, Any],
         session_id: str
     ) -> str:
         """Store document in LanceDB with embedding.
@@ -61,8 +62,8 @@ class CombinedMemoryRepository(MemoryRepository):
         self,
         query: str,
         limit: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search for similar documents using hybrid search in LanceDB.
 
         Args:
@@ -205,7 +206,7 @@ class CombinedMemoryRepository(MemoryRepository):
         self,
         session_id: str,
         status: str,
-        saturation_metrics: dict | None = None,
+        saturation_metrics: dict[str, Any] | None = None,
         report_path: str | None = None
     ) -> None:
         """Update research session status.

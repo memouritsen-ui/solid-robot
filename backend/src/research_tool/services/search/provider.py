@@ -1,6 +1,7 @@
 """Search provider abstract interface."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class SearchProvider(ABC):
@@ -23,8 +24,8 @@ class SearchProvider(ABC):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Execute search and return standardized results.
 
         Args:

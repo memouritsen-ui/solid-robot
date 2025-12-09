@@ -1,5 +1,8 @@
 """Retry logic with exponential backoff."""
 
+from collections.abc import Callable
+from typing import TypeVar
+
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -12,8 +15,10 @@ from research_tool.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+F = TypeVar("F", bound=Callable[..., object])
 
-def with_retry(func):
+
+def with_retry(func: F) -> F:
     """Decorator for retry with exponential backoff.
 
     Retry strategy from META guide Section 3.6:
@@ -26,7 +31,7 @@ def with_retry(func):
         async def fetch_data():
             ...
     """
-    return retry(
+    wrapped = retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=1, min=4, max=60),
         retry=retry_if_exception_type((RateLimitError, TimeoutError)),
@@ -38,3 +43,4 @@ def with_retry(func):
         ),
         reraise=True
     )(func)
+    return wrapped

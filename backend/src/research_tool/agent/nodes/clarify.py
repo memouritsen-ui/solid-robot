@@ -1,12 +1,14 @@
 """Clarification node - analyze query and ask if genuinely needed."""
 
+from typing import Any
+
 from research_tool.core.logging import get_logger
 from research_tool.models.state import ResearchState
 
 logger = get_logger(__name__)
 
 
-async def clarify_node(state: ResearchState) -> dict:
+async def clarify_node(state: ResearchState) -> dict[str, Any]:
     """Clarify the research query if needed.
 
     Anti-pattern prevention: MAX 2 clarification exchanges (Anti-Pattern #1, #2)

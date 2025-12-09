@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -15,7 +16,7 @@ class SourceResult:
     retrieved_at: datetime
     full_content: str | None = None
     quality_score: float = 0.5
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -28,7 +29,7 @@ class Entity:
     first_seen: datetime
     mention_count: int = 1
     confidence: float = 0.5
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def merge(self, other: "Entity") -> None:
         """Merge another entity instance into this one."""
@@ -53,7 +54,7 @@ class Fact:
     verified: bool
     contradictions: list[str] = field(default_factory=list)  # Conflicting statements
     extracted_at: datetime = field(default_factory=datetime.now)
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_source(self, url: str) -> None:
         """Add a supporting source and increase confidence."""

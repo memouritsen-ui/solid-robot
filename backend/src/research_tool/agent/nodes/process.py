@@ -1,12 +1,14 @@
 """Processing node - extract entities and facts from collected data."""
 
+from typing import Any
+
 from research_tool.core.logging import get_logger
 from research_tool.models.state import ResearchState
 
 logger = get_logger(__name__)
 
 
-async def process_node(state: ResearchState) -> dict:
+async def process_node(state: ResearchState) -> dict[str, Any]:
     """Process collected data to extract entities and facts.
 
     Args:

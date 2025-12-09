@@ -1,6 +1,7 @@
 """Saturation detection from META guide Section 3.7 and 7.5."""
 
 from dataclasses import asdict, dataclass
+from typing import Any
 
 
 @dataclass
@@ -19,7 +20,7 @@ class SaturationMetrics:
     citation_circularity: float    # Self-referencing citation ratio
     source_coverage: float         # Sources queried / Available sources
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return asdict(self)
 

@@ -1,5 +1,7 @@
 """API request and response models."""
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -32,7 +34,7 @@ class ResearchStatus(BaseModel):
     sources_queried: int = 0
     entities_found: int = 0
     facts_extracted: int = 0
-    saturation_metrics: dict | None = None
+    saturation_metrics: dict[str, Any] | None = None
     stop_reason: str | None = None
     export_path: str | None = None
 
@@ -46,4 +48,4 @@ class ProgressUpdate(BaseModel):
     sources_queried: int = 0
     entities_found: int = 0
     facts_extracted: int = 0
-    data: dict | None = None
+    data: dict[str, Any] | None = None

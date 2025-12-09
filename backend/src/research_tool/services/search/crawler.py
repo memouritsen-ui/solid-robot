@@ -11,14 +11,24 @@ import asyncio
 from contextlib import suppress
 from datetime import datetime
 from typing import Any
-from urllib.parse import urljoin, urlparse
 
-from playwright.async_api import async_playwright, Page, Browser, TimeoutError as PlaywrightTimeout
+from playwright.async_api import (
+    Browser,
+    Page,
+    async_playwright,
+)
+from playwright.async_api import (
+    TimeoutError as PlaywrightTimeout,
+)
 from trafilatura import extract
 from trafilatura.settings import use_config
 
 from research_tool.core.config import Settings
-from research_tool.core.exceptions import AccessDeniedError, RateLimitError, TimeoutError
+from research_tool.core.exceptions import (
+    AccessDeniedError,
+    RateLimitError,
+    TimeoutError,
+)
 from research_tool.core.logging import get_logger
 
 from .provider import SearchProvider
@@ -45,10 +55,22 @@ class PlaywrightCrawler(SearchProvider):
 
     # Stealth user agents rotation
     USER_AGENTS = [
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+        (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
+        (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+        ),
+        (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
+            "Gecko/20100101 Firefox/121.0"
+        ),
     ]
 
     def __init__(
@@ -271,8 +293,8 @@ class PlaywrightCrawler(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search by crawling provided URLs.
 
         Note: This provider doesn't do traditional search. Instead, pass URLs
@@ -300,12 +322,14 @@ class PlaywrightCrawler(SearchProvider):
                 page_data = await self.fetch_page(url)
 
                 if "error" not in page_data and page_data.get("content"):
+                    content = page_data["content"]
+                    snippet = (content[:500] + "...") if len(content) > 500 else content
                     results.append({
                         "url": page_data["url"],
                         "title": page_data["title"],
-                        "snippet": (page_data["content"][:500] + "...") if len(page_data["content"]) > 500 else page_data["content"],
+                        "snippet": snippet,
                         "source_name": self.name,
-                        "full_content": page_data["content"],
+                        "full_content": content,
                         "retrieved_at": page_data["retrieved_at"],
                         "metadata": page_data.get("metadata", {})
                     })
@@ -321,9 +345,9 @@ class PlaywrightCrawler(SearchProvider):
 
     async def crawl_search_results(
         self,
-        search_results: list[dict],
+        search_results: list[dict[str, Any]],
         max_crawl: int = 5
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Crawl full content for search results from other providers.
 
         This is the main integration point - takes results from Tavily/Brave/etc

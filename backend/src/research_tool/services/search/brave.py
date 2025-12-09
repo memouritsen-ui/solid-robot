@@ -1,6 +1,7 @@
 """Brave Search API provider."""
 
 from datetime import datetime
+from typing import Any
 
 import httpx
 
@@ -31,8 +32,8 @@ class BraveProvider(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search using Brave Search API.
 
         Args:
@@ -54,7 +55,7 @@ class BraveProvider(SearchProvider):
             "X-Subscription-Token": settings.brave_api_key
         }
 
-        params = {
+        params: dict[str, str | int] = {
             "q": query,
             "count": min(max_results, 20)  # API max
         }
@@ -62,9 +63,9 @@ class BraveProvider(SearchProvider):
         # Add optional filters
         if filters:
             if "country" in filters:
-                params["country"] = filters["country"]
+                params["country"] = str(filters["country"])
             if "freshness" in filters:
-                params["freshness"] = filters["freshness"]
+                params["freshness"] = str(filters["freshness"])
 
         async with httpx.AsyncClient() as client:
             try:

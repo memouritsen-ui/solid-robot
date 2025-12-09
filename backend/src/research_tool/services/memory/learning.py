@@ -1,5 +1,6 @@
 """Source effectiveness learning using exponential moving average."""
 
+from typing import Any
 
 from .sqlite_repo import SQLiteRepository
 
@@ -107,7 +108,7 @@ class SourceLearning:
         self,
         source_name: str,
         domain: str
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Get detailed effectiveness statistics for a source.
 
         Args:

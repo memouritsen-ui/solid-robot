@@ -2,6 +2,7 @@
 
 from contextlib import suppress
 from datetime import datetime
+from typing import Any
 
 from research_tool.core.logging import get_logger
 from research_tool.models.domain import DomainConfiguration
@@ -27,7 +28,7 @@ def get_crawler() -> PlaywrightCrawler:
     return _crawler
 
 
-async def collect_node(state: ResearchState) -> dict:
+async def collect_node(state: ResearchState) -> dict[str, Any]:
     """Collect data from sources per research plan.
 
     This node:
@@ -63,7 +64,8 @@ async def collect_node(state: ResearchState) -> dict:
         config = DomainConfiguration.default()
 
     # Initialize providers
-    providers = {}
+    from research_tool.services.search.provider import SearchProvider
+    providers: dict[str, SearchProvider] = {}
     with suppress(ValueError):  # Not configured
         providers["tavily"] = TavilyProvider()
 
@@ -203,7 +205,7 @@ async def collect_node(state: ResearchState) -> dict:
     }
 
 
-async def crawl_urls_node(state: ResearchState) -> dict:
+async def crawl_urls_node(state: ResearchState) -> dict[str, Any]:
     """Dedicated node for crawling specific URLs.
 
     Use this when you have a list of URLs to crawl directly,

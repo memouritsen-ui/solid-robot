@@ -1,5 +1,7 @@
 """Planning node - create research plan using memory."""
 
+from typing import Any
+
 from research_tool.core.logging import get_logger
 from research_tool.models.domain import DomainConfiguration
 from research_tool.models.state import ResearchState
@@ -8,7 +10,7 @@ from research_tool.services.memory import CombinedMemoryRepository
 logger = get_logger(__name__)
 
 
-async def plan_node(state: ResearchState) -> dict:
+async def plan_node(state: ResearchState) -> dict[str, Any]:
     """Create research plan using memory and domain configuration.
 
     Anti-pattern prevention: Use memory for planning (Anti-Pattern #8)

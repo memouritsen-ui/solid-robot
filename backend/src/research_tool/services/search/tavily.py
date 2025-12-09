@@ -1,6 +1,7 @@
 """Tavily AI search provider."""
 
 from datetime import datetime
+from typing import Any
 
 from tavily import TavilyClient
 
@@ -33,8 +34,8 @@ class TavilyProvider(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Execute Tavily search with advanced mode.
 
         Args:

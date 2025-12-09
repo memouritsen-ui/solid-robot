@@ -1,6 +1,7 @@
 """arXiv search provider for preprints and academic papers."""
 
 from datetime import datetime
+from typing import Any
 
 import arxiv
 
@@ -31,8 +32,8 @@ class ArxivProvider(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search arXiv for academic preprints.
 
         Args:

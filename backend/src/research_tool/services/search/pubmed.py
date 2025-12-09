@@ -1,6 +1,7 @@
 """PubMed search provider for medical literature."""
 
 from datetime import datetime
+from typing import Any
 
 import httpx
 
@@ -29,8 +30,8 @@ class PubMedProvider(SearchProvider):
         self,
         query: str,
         max_results: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search PubMed using E-utilities API.
 
         Args:

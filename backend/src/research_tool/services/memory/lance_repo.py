@@ -4,18 +4,19 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import lancedb
 from lancedb.pydantic import LanceModel, Vector
 from sentence_transformers import SentenceTransformer
 
 
-class ResearchDocument(LanceModel):
+class ResearchDocument(LanceModel):  # type: ignore[misc]
     """Document stored in LanceDB with vector embedding."""
 
     id: str
     content: str
-    vector: Vector(384)  # bge-small-en-v1.5 dimension
+    vector: Vector(384)  # type: ignore[valid-type]  # bge-small-en-v1.5 dimension
     session_id: str
     source_url: str | None = None
     source_name: str | None = None
@@ -32,7 +33,7 @@ class LanceDBRepository:
     CHUNK_SIZE = 400  # Approximate words for 512 tokens
     CHUNK_OVERLAP = 50  # Approximate words for 64 tokens
 
-    def __init__(self, db_path: str = "./data/lance_db"):
+    def __init__(self, db_path: str = "./data/lance_db") -> None:
         """Initialize LanceDB repository.
 
         Args:
@@ -42,9 +43,9 @@ class LanceDBRepository:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.embedder = SentenceTransformer(self.MODEL_NAME)
         self.db = lancedb.connect(str(self.db_path))
-        self._table = None
+        self._table: Any = None
 
-    def _get_table(self):
+    def _get_table(self) -> Any:
         """Get or create the documents table."""
         if self._table is None:
             try:
@@ -83,7 +84,7 @@ class LanceDBRepository:
     async def store_document(
         self,
         content: str,
-        metadata: dict,
+        metadata: dict[str, Any],
         session_id: str
     ) -> str:
         """Store document with embedding.
@@ -102,7 +103,7 @@ class LanceDBRepository:
         chunks = self.chunk_document(content)
         embeddings = self.embedder.encode(chunks)
 
-        primary_id = None
+        primary_id: str | None = None
         documents = []
 
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
@@ -126,15 +127,17 @@ class LanceDBRepository:
             documents.append(doc.model_dump())
 
         table.add(documents)
+        if primary_id is None:
+            raise ValueError("No documents were created")
         return primary_id
 
     def _merge_results(
         self,
-        semantic_results: list[dict],
-        keyword_results: list[dict],
+        semantic_results: list[dict[str, Any]],
+        keyword_results: list[dict[str, Any]],
         semantic_weight: float = 0.6,
         keyword_weight: float = 0.4
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Merge semantic and keyword search results with weighted scoring.
 
         Args:
@@ -147,8 +150,12 @@ class LanceDBRepository:
             list[dict]: Merged and sorted results
         """
         # Create score maps
-        semantic_scores = {r["id"]: r.get("_distance", 1.0) for r in semantic_results}
-        keyword_scores = {r["id"]: r.get("score", 0.0) for r in keyword_results}
+        semantic_scores: dict[str, float] = {
+            r["id"]: r.get("_distance", 1.0) for r in semantic_results
+        }
+        keyword_scores: dict[str, float] = {
+            r["id"]: r.get("score", 0.0) for r in keyword_results
+        }
 
         # Normalize scores (semantic uses distance, lower is better)
         if semantic_scores:
@@ -167,7 +174,7 @@ class LanceDBRepository:
 
         # Combine scores
         all_ids = set(semantic_scores.keys()) | set(keyword_scores.keys())
-        combined_scores = {}
+        combined_scores: dict[str, float] = {}
         for doc_id in all_ids:
             sem_score = semantic_scores.get(doc_id, 0.0)
             key_score = keyword_scores.get(doc_id, 0.0)
@@ -176,8 +183,10 @@ class LanceDBRepository:
             )
 
         # Get documents and add combined scores
-        doc_map = {r["id"]: r for r in semantic_results + keyword_results}
-        results = []
+        doc_map: dict[str, dict[str, Any]] = {
+            r["id"]: r for r in semantic_results + keyword_results
+        }
+        results: list[dict[str, Any]] = []
         for doc_id, score in combined_scores.items():
             doc = doc_map.get(doc_id)
             if doc:
@@ -192,8 +201,8 @@ class LanceDBRepository:
         self,
         query: str,
         limit: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search for similar documents using hybrid search.
 
         Combines semantic (vector) search and keyword (FTS) search:
@@ -208,19 +217,21 @@ class LanceDBRepository:
         Returns:
             list[dict]: List of matching documents with metadata
         """
+        _ = filters  # Not implemented yet
         table = self._get_table()
 
         # Get query embedding
         query_vector = self.embedder.encode(query)
 
         # Semantic search
-        semantic_results = (
+        semantic_results: list[dict[str, Any]] = (
             table.search(query_vector.tolist())
             .limit(limit * 2)
             .to_list()
         )
 
         # Keyword search (FTS)
+        keyword_results: list[dict[str, Any]]
         try:
             keyword_results = (
                 table.search(query, query_type="fts")

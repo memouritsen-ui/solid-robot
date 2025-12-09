@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from operator import add
-from typing import Annotated
+from typing import Annotated, Any
 
 from typing_extensions import TypedDict
 
@@ -25,16 +25,19 @@ class ResearchState(TypedDict, total=False):
 
     # Accumulating lists (use Annotated with add operator for LangGraph)
     sources_queried: Annotated[list[str], add]
-    entities_found: Annotated[list[dict], add]
-    facts_extracted: Annotated[list[dict], add]
-    access_failures: Annotated[list[dict], add]
+    entities_found: Annotated[list[dict[str, Any]], add]
+    facts_extracted: Annotated[list[dict[str, Any]], add]
+    access_failures: Annotated[list[dict[str, Any]], add]
+
+    # URLs to crawl (optional)
+    urls_to_crawl: list[str]
 
     # Current workflow state
     current_phase: str
-    saturation_metrics: dict | None
+    saturation_metrics: dict[str, Any] | None
     should_stop: bool
     stop_reason: str | None
 
     # Output
-    final_report: dict | None
+    final_report: dict[str, Any] | None
     export_path: str | None

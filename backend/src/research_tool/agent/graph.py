@@ -30,7 +30,7 @@ def should_continue_research(state: ResearchState) -> str:
     return "continue"
 
 
-def create_research_graph():
+def create_research_graph():  # type: ignore[no-untyped-def]
     """Create the research workflow graph.
 
     Workflow:
@@ -79,6 +79,5 @@ def create_research_graph():
     workflow.add_edge("synthesize", END)
 
     # Add checkpointing for resumability
-    checkpointer = SqliteSaver.from_conn_string("./data/checkpoints.db")
-
-    return workflow.compile(checkpointer=checkpointer)
+    with SqliteSaver.from_conn_string("./data/checkpoints.db") as checkpointer:
+        return workflow.compile(checkpointer=checkpointer)

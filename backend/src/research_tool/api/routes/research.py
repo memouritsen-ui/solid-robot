@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
@@ -14,10 +15,10 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api/research", tags=["research"])
 
 # Active research sessions (in-memory for now)
-active_sessions: dict[str, dict] = {}
+active_sessions: dict[str, dict[str, Any]] = {}
 
 
-async def run_research_workflow(session_id: str, initial_state: dict) -> None:
+async def run_research_workflow(session_id: str, initial_state: dict[str, Any]) -> None:
     """Run research workflow in background.
 
     Args:
@@ -28,7 +29,7 @@ async def run_research_workflow(session_id: str, initial_state: dict) -> None:
         logger.info("research_workflow_start", session_id=session_id)
 
         # Create graph
-        graph = create_research_graph()
+        graph = create_research_graph()  # type: ignore[no-untyped-call]
 
         # Run workflow
         config = {"configurable": {"thread_id": session_id}}
@@ -54,7 +55,7 @@ async def run_research_workflow(session_id: str, initial_state: dict) -> None:
 async def start_research(
     request: ResearchRequest,
     background_tasks: BackgroundTasks
-) -> dict:
+) -> dict[str, Any]:
     """Start a new research session.
 
     Args:
@@ -140,7 +141,7 @@ async def get_research_status(session_id: str) -> ResearchStatus:
 
 
 @router.post("/{session_id}/stop")
-async def stop_research(session_id: str) -> dict:
+async def stop_research(session_id: str) -> dict[str, Any]:
     """Stop a running research session early.
 
     Args:
@@ -174,7 +175,7 @@ async def stop_research(session_id: str) -> dict:
 
 
 @router.get("/{session_id}/report")
-async def get_research_report(session_id: str) -> dict:
+async def get_research_report(session_id: str) -> dict[str, Any]:
     """Get final research report.
 
     Args:
@@ -194,7 +195,7 @@ async def get_research_report(session_id: str) -> dict:
     if session["status"] != "completed":
         raise HTTPException(status_code=400, detail="Research not completed")
 
-    final_report = session["state"].get("final_report")
+    final_report: dict[str, Any] | None = session["state"].get("final_report")
 
     if not final_report:
         raise HTTPException(status_code=404, detail="Report not generated")

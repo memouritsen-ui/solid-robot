@@ -1,6 +1,7 @@
 """Memory repository interface for research tool."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class MemoryRepository(ABC):
@@ -10,7 +11,7 @@ class MemoryRepository(ABC):
     async def store_document(
         self,
         content: str,
-        metadata: dict,
+        metadata: dict[str, Any],
         session_id: str
     ) -> str:
         """Store document with embedding.
@@ -30,8 +31,8 @@ class MemoryRepository(ABC):
         self,
         query: str,
         limit: int = 10,
-        filters: dict | None = None
-    ) -> list[dict]:
+        filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Search for similar documents using hybrid search.
 
         Args:
