@@ -519,7 +519,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 **Total Tasks**: 307
 **Completed**: ~200 (~65%)
-**Tests**: 304 passing (2025-12-09)
+**Tests**: 307 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
@@ -553,11 +553,11 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | test_evaluate.py | 9 | Agent |
 | test_synthesize.py | 13 | Agent |
 
-### Missing Test Coverage
-- [ ] test_saturation.py - Saturation decision logic
-- [ ] test_decisions.py - Decision tree logic
-- [ ] test_agent_workflow.py - Full workflow integration
-- [ ] E2E tests for all phases
+### Test Coverage Status (Updated 2025-12-09)
+- [x] test_saturation.py - 18 tests ✅
+- [x] test_decisions.py - 18 tests ✅
+- [x] test_agent_workflow.py - 7 tests ✅
+- [ ] E2E tests for all phases - NOT STARTED
 
 ---
 
@@ -567,19 +567,17 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
    - Open Xcode and build gui/ResearchTool/Package.swift
    - Run backend + Ollama and test E2E flow
 
-2. **Missing implementations**:
-   - #145 exa.py - Exa search provider
-   - #149 unpaywall.py - Open access finder
-   - #169 export_node.py - Export workflow node
-   - #171-172 Decision trees (source_selector, clarification)
-   - #185-186 LangGraph tool wrappers
+2. **Phase 4 COMPLETE** - All implementations done:
+   - [x] #145 exa.py ✅
+   - [x] #149 unpaywall.py ✅
+   - [x] #169 export_node.py ✅
+   - [x] #171-172 Decision trees ✅
+   - [x] #185-186 LangGraph tool wrappers ✅
+   - [x] #157-158 Obstacle handling tests ✅
+   - [x] #178-179 Saturation detection tests ✅
+   - [x] #183 Full workflow integration test ✅
 
-3. **Missing tests**:
-   - #157-158 Obstacle handling tests
-   - #178-179 Saturation detection tests
-   - #183 Full workflow integration test
-
-4. **Phase 5-7**: Not started at all
+3. **Phase 5-7**: NOT STARTED
 
 ---
 
