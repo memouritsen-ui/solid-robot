@@ -296,7 +296,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ### Decision Logic
 - [x] #170 Create /backend/src/research_tool/agent/decisions/__init__.py
-- [ ] #171 Create source_selector.py (decision tree from META 7.2) -- NOT IMPLEMENTED
+- [x] #171 Create source_selector.py (decision tree from META 7.2) -- IMPLEMENTED 2025-12-09
 - [ ] #172 Create clarification.py (decision tree from META 7.3) -- NOT IMPLEMENTED
 - [x] #173 Create obstacle_handler.py (decision tree from META 7.4)
 - [x] #174 Create saturation.py (decision tree from META 7.5)
