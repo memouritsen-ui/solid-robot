@@ -231,7 +231,7 @@
 - [x] #148 Create arxiv.py - arXiv provider
 - [ ] #149 Create unpaywall.py - Open access finder -- NOT IMPLEMENTED
 - [x] #150 Create brave.py - Brave search provider
-- [ ] #151 Create crawler.py - Playwright with stealth -- NOT IMPLEMENTED ⚠️ CRITICAL
+- [x] #151 Create crawler.py - Playwright with stealth -- IMPLEMENTED 2025-12-09
 - [ ] #152 Test: Each provider returns results -- NEEDS INTEGRATION TESTS
 
 ### Obstacle Handling
@@ -475,20 +475,20 @@
 | Phase 1: Foundation | #6-47 | 39/42 | ✅ MOSTLY COMPLETE (3 SwiftUI views missing) |
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E validations pending) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
-| Phase 4: Research | #136-204 | 45/69 | ⚠️ 65% COMPLETE (crawler.py CRITICAL) |
+| Phase 4: Research | #136-204 | 46/69 | ⚠️ 67% COMPLETE |
 | Phase 5: Intelligence | #205-239 | 0/35 | ❌ NOT STARTED |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~174 (~57%)
-**Critical Missing**: #151 crawler.py (Playwright with stealth)
+**Completed**: ~175 (~57%)
+**Playwright crawler**: #151 IMPLEMENTED (2025-12-09)
 
 ---
 
 ## CRITICAL NEXT STEPS
 
-1. **#151 crawler.py** - Implement Playwright with stealth for web scraping
+1. ~~**#151 crawler.py** - Implement Playwright with stealth for web scraping~~ ✅ DONE
 2. **#169 export_node.py** - Add export capability to workflow
 3. **Phase 5** - Intelligence features (domain detection, cross-verification)
 4. **Phase 6** - Export system (PDF, DOCX, etc.)

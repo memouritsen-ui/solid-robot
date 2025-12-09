@@ -21,7 +21,7 @@ class DomainConfiguration:
         return cls(
             domain="medical",
             primary_sources=["pubmed", "semantic_scholar"],
-            secondary_sources=["arxiv", "unpaywall"],
+            secondary_sources=["arxiv", "unpaywall", "playwright_crawler"],
             academic_required=True,
             verification_threshold=0.8,
             keywords=["clinical", "patient", "treatment", "diagnosis", "therapy",
@@ -34,7 +34,7 @@ class DomainConfiguration:
         """Configuration for competitive intelligence/business research."""
         return cls(
             domain="competitive_intelligence",
-            primary_sources=["tavily", "exa", "brave"],
+            primary_sources=["tavily", "exa", "brave", "playwright_crawler"],
             secondary_sources=["news_api"],
             academic_required=False,
             verification_threshold=0.6,
@@ -49,7 +49,7 @@ class DomainConfiguration:
         return cls(
             domain="academic",
             primary_sources=["semantic_scholar", "arxiv"],
-            secondary_sources=["pubmed", "unpaywall"],
+            secondary_sources=["pubmed", "unpaywall", "playwright_crawler"],
             academic_required=True,
             verification_threshold=0.7,
             keywords=["research", "study", "paper", "journal", "peer-reviewed",
@@ -62,7 +62,7 @@ class DomainConfiguration:
         """Configuration for regulatory/compliance research."""
         return cls(
             domain="regulatory",
-            primary_sources=["tavily", "brave"],
+            primary_sources=["tavily", "brave", "playwright_crawler"],
             secondary_sources=["pubmed"],
             academic_required=False,
             verification_threshold=0.9,  # High threshold for regulatory
@@ -76,7 +76,7 @@ class DomainConfiguration:
         """Default configuration for unknown domains."""
         return cls(
             domain="general",
-            primary_sources=["tavily", "brave"],
+            primary_sources=["tavily", "brave", "playwright_crawler"],
             secondary_sources=["semantic_scholar"],
             academic_required=False,
             verification_threshold=0.6,
