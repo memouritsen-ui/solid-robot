@@ -1,8 +1,8 @@
 # SOLID-ROBOT SESSION STATUS
 ## For Next Claude Code Session
 
-**Last Updated**: 2025-12-09 (later session)
-**Last Action**: Implemented Playwright crawler (#151)
+**Last Updated**: 2025-12-09 (evening)
+**Last Action**: Created independent venv (removed symlink to solid-robot)
 
 ---
 
@@ -80,17 +80,18 @@ PYTHONPATH=src python -m uvicorn research_tool.main:app --reload
 
 ---
 
-## VENV ISSUE
+## VENV STATUS ✅
 
-The `.venv` in solid-robot-kopi is a SYMLINK to solid-robot:
-```
-.venv -> /Users/madsbruusgaard-mouritsen/solid-robot/backend/.venv
-```
+The `.venv` is now a **real venv** (not a symlink). solid-robot-kopi is fully self-contained.
 
-To run tests/code, ALWAYS use:
+To run tests/code:
 ```bash
+cd /Users/madsbruusgaard-mouritsen/solid-robot-kopi/backend
+source .venv/bin/activate
 PYTHONPATH=src python -m pytest tests/ -v
 ```
+
+**Note:** The folder `/Users/madsbruusgaard-mouritsen/solid-robot/` can now be safely deleted.
 
 ---
 

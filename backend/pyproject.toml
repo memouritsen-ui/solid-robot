@@ -12,6 +12,7 @@ dependencies = [
     "httpx>=0.24.0",
     "litellm>=1.0.0",
     "langgraph>=0.0.30",
+    "langgraph-checkpoint-sqlite>=3.0.0",
     "langchain-core>=0.1.0",
     "lancedb>=0.3.0",
     "sentence-transformers>=2.2.0",
