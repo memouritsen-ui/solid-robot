@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     exa_api_key: str | None = None
     brave_api_key: str | None = None
     semantic_scholar_api_key: str | None = None
+    unpaywall_email: str | None = None
 
     # Ollama
     ollama_base_url: str = "http://localhost:11434"

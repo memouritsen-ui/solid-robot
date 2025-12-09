@@ -8,6 +8,7 @@ from research_tool.services.search.provider import SearchProvider
 from research_tool.services.search.pubmed import PubMedProvider
 from research_tool.services.search.semantic_scholar import SemanticScholarProvider
 from research_tool.services.search.tavily import TavilyProvider
+from research_tool.services.search.unpaywall import UnpaywallProvider
 
 __all__ = [
     "ArxivProvider",
@@ -18,4 +19,5 @@ __all__ = [
     "SearchProvider",
     "SemanticScholarProvider",
     "TavilyProvider",
+    "UnpaywallProvider",
 ]
