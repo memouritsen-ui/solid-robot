@@ -267,7 +267,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #154 Create /backend/src/research_tool/utils/circuit_breaker.py
 - [x] #155 Implement exponential backoff (4s, 8s, 16s, 32s, 60s max)
 - [ ] #156 Implement proxy rotation (if needed) -- SKIPPED
-- [ ] #157 Test: Rate limit triggers backoff -- NEEDS TEST
+- [x] #157 Test: Rate limit triggers backoff -- IMPLEMENTED 2025-12-09
 - [ ] #158 Test: Circuit breaker opens after failures -- NEEDS TEST
 
 ### LangGraph Agent
