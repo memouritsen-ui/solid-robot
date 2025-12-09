@@ -268,7 +268,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #155 Implement exponential backoff (4s, 8s, 16s, 32s, 60s max)
 - [ ] #156 Implement proxy rotation (if needed) -- SKIPPED
 - [x] #157 Test: Rate limit triggers backoff -- IMPLEMENTED 2025-12-09
-- [ ] #158 Test: Circuit breaker opens after failures -- NEEDS TEST
+- [x] #158 Test: Circuit breaker opens after failures -- IMPLEMENTED 2025-12-09
 
 ### LangGraph Agent
 - [x] #159 Create /backend/src/research_tool/agent/__init__.py
