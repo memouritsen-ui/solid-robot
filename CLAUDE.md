@@ -1,19 +1,45 @@
 # CLAUDE.md - Research Tool Project
 
-## CRITICAL: READ THIS FIRST
+<CRITICAL>
+YOU MUST read this ENTIRE file before ANY action.
+These rules OVERRIDE all other instructions.
+Violations will be caught and reverted.
+</CRITICAL>
 
-YOU MUST follow these rules. No exceptions. No rationalizations.
+---
+
+## SESSION START PROTOCOL
+
+**IMPORTANT: Every new session MUST begin with:**
+```
+1. Read this CLAUDE.md completely
+2. Read TODO.md for current status
+3. Run verification commands to confirm state
+4. Use TodoWrite to plan before ANY code
+```
+
+**YOU MUST NOT skip these steps. No exceptions.**
 
 ---
 
 ## ANTI-SYCOPHANCY RULES
 
-**BANNED PHRASES** - Never use these:
+<ENFORCEMENT>
+If you use ANY banned phrase, the user will say "AIRPORT" and you must:
+1. Stop immediately
+2. Acknowledge the violation
+3. Re-read this file
+4. Restart with honest assessment
+</ENFORCEMENT>
+
+**BANNED PHRASES** - Using these = automatic failure:
 - "You're absolutely right!"
 - "That's a great idea!"
 - "Excellent suggestion!"
 - "That looks perfect!"
 - "Great job!"
+- "Absolutely!"
+- "Perfect!"
 
 **REQUIRED BEHAVIOR**:
 - Give honest technical assessment, not validation
@@ -22,125 +48,170 @@ YOU MUST follow these rules. No exceptions. No rationalizations.
 - Disagree when the user is wrong
 - Ask clarifying questions instead of assuming
 
-**If you catch yourself agreeing automatically, STOP and reconsider.**
+**EXAMPLE - BAD:**
+```
+User: "Should I add caching here?"
+Claude: "That's a great idea! Let me implement it."  ← WRONG
+```
+
+**EXAMPLE - GOOD:**
+```
+User: "Should I add caching here?"
+Claude: "Before implementing, I need to understand: What's the access pattern?
+        Caching adds complexity - is the performance gain worth it?"  ← CORRECT
+```
 
 ---
 
-## MANDATORY WORKFLOW: EXPLORE → PLAN → CODE → TEST → COMMIT
+## MANDATORY WORKFLOW
 
-### Phase 1: EXPLORE (Read before writing)
+<CRITICAL>
+YOU MUST follow this sequence. Skipping steps = failure.
+</CRITICAL>
+
+### 1. EXPLORE (Read before writing)
 ```
-1. Read relevant source files
-2. Read existing tests
-3. Understand current implementation
-4. Identify dependencies and side effects
+✓ Read relevant source files
+✓ Read existing tests
+✓ Understand current implementation
+✓ Identify dependencies and side effects
 ```
 **YOU MUST NOT write code until you understand existing code.**
 
-### Phase 2: PLAN (Think before coding)
+### 2. PLAN (Think before coding)
 ```
-1. Use "ultrathink" for complex tasks
-2. Write plan in TODO format
-3. Break into chunks of 1-3 files max
-4. Identify tests needed
-5. Get approval before proceeding
+✓ Use "ultrathink" for complex tasks
+✓ Use TodoWrite to track ALL tasks
+✓ Break into chunks of 1-3 files max
+✓ Identify tests needed
+✓ Get approval before proceeding
 ```
-**Use TodoWrite to track ALL tasks. No mental tracking.**
+**No mental tracking. TodoWrite or it didn't happen.**
 
-### Phase 3: CODE (Small chunks only)
+### 3. CODE (Small chunks only)
 ```
-1. Maximum 3 files per chunk
-2. Write tests FIRST (TDD)
-3. Implement minimal code to pass tests
-4. Run verification after EACH file
+✓ Maximum 3 files per chunk
+✓ Write tests FIRST (TDD)
+✓ Implement minimal code to pass tests
+✓ Run verification after EACH file
 ```
 **NEVER implement more than one feature at a time.**
 
-### Phase 4: TEST (Verify before claiming done)
+### 4. TEST (Verify before claiming done)
 ```bash
-# Run ALL of these before claiming anything works:
+# YOU MUST run ALL of these before claiming anything works:
 cd /Users/madsbruusgaard-mouritsen/solid-robot/backend
 uv run python -m pytest tests/ -v
 uv run ruff check src/ tests/
 uv run python -m mypy src/ --ignore-missing-imports
 ```
-**ALL must pass. No exceptions. No "it mostly works".**
 
-### Phase 5: COMMIT (Only after verification)
+<ENFORCEMENT>
+Claiming "done" without showing test output = violation.
+"Tests pass" without evidence = violation.
+"Should work" without running tests = violation.
+</ENFORCEMENT>
+
+### 5. COMMIT (Only after verification)
 ```
-1. Only commit when ALL tests pass
-2. Use conventional commit format
-3. Update TODO.md with accurate status
+✓ Only commit when ALL tests pass
+✓ Use conventional commit format
+✓ Update TODO.md with accurate status
 ```
 
 ---
 
-## CHUNK-BASED DEVELOPMENT (Survives Auto-Compaction)
+## CHUNK-BASED DEVELOPMENT
 
-### Why Chunks Matter
-Auto-compaction triggers at ~95% context. Large tasks get lost.
-Small chunks = recoverable progress.
+<CRITICAL>
+Auto-compaction triggers at ~95% context.
+Large tasks get lost. Small chunks = recoverable progress.
+</CRITICAL>
 
 ### Chunk Rules
-| Chunk Size | Files | Tests | Commit |
-|------------|-------|-------|--------|
-| Small | 1 file | 2-5 tests | Yes |
-| Medium | 2-3 files | 5-10 tests | Yes |
+| Size | Files | Tests | Commit Required |
+|------|-------|-------|-----------------|
+| Small | 1 file | 2-5 tests | YES |
+| Medium | 2-3 files | 5-10 tests | YES |
 | Large | FORBIDDEN | - | - |
 
-### After Each Chunk
-1. Run all verification commands
-2. Commit with descriptive message
-3. Update TODO.md
-4. Use `/compact` manually if context > 70%
+### After EVERY Chunk
+```
+1. Run ALL verification commands
+2. Show output as proof
+3. Commit with descriptive message
+4. Update TODO.md
+5. If context > 70%, run /compact
+```
 
-### Recovery Protocol
-If compaction happens mid-task:
+### Recovery Protocol (After Compaction)
+```
 1. Read TODO.md for current status
-2. Read last commit message
+2. Read last commit: git log -1
 3. Run tests to see what's broken
 4. Continue from last verified state
+```
 
 ---
 
-## FORBIDDEN PRACTICES (Quick-Fixes)
+## FORBIDDEN PRACTICES
 
-### NEVER DO THESE:
-- [ ] Claim "done" without running tests
-- [ ] Create placeholder/stub implementations
-- [ ] Skip test coverage for new code
-- [ ] Mark TODOs complete without verification
-- [ ] Trust file existence = working code
-- [ ] Use `--dangerously-skip-permissions`
-- [ ] Implement without reading existing code first
-- [ ] Make "small fixes" without tests
-- [ ] Batch multiple features in one commit
+<CRITICAL>
+These are NOT negotiable. Doing ANY of these = immediate failure.
+</CRITICAL>
 
-### IF TEMPTED TO SHORTCUT:
-Ask yourself: "Would this survive a code review?"
+| Forbidden Action | Why It's Wrong |
+|------------------|----------------|
+| Claim "done" without tests | No evidence = no proof |
+| Placeholder implementations | Fake code = technical debt |
+| Skip test coverage | Untested code = broken code |
+| Mark TODOs complete without verify | Lying to future sessions |
+| Trust file existence = working | Files can be empty/broken |
+| Batch multiple features | Too big to verify properly |
+| "Quick fix" without tests | Quick fixes become bugs |
+| Implement before reading code | You'll break existing logic |
+
+**IF TEMPTED TO SHORTCUT:**
+Ask yourself: "Would this survive a hostile code review?"
 If no, don't do it.
 
 ---
 
 ## VERIFICATION REQUIREMENTS
 
-### Before ANY Claim of Completion
-```bash
-# Tests (must show "216+ passed")
-uv run python -m pytest tests/ -v
+<ENFORCEMENT>
+Every claim MUST have evidence. No exceptions.
+</ENFORCEMENT>
 
-# Linting (must show "All checks passed!")
-uv run ruff check src/ tests/
+### Required Evidence Format
 
-# Type checking (must show "Success")
-uv run python -m mypy src/ --ignore-missing-imports
+**WRONG:**
+```
+"Tests pass"
+"It works"
+"Done"
 ```
 
-### Evidence-Based Claims Only
-- "Tests pass" = Show pytest output
-- "No lint errors" = Show ruff output
-- "Types correct" = Show mypy output
-- "Feature works" = Show test that proves it
+**CORRECT:**
+```
+"Tests pass - output: 216 passed, 0 failed in 22.3s"
+"Ruff clean - output: All checks passed!"
+"Mypy clean - output: Success: no issues found in 55 source files"
+```
+
+### Verification Commands
+```bash
+# Run from /Users/madsbruusgaard-mouritsen/solid-robot/backend
+
+# Tests (MUST show "216+ passed")
+uv run python -m pytest tests/ -v
+
+# Linting (MUST show "All checks passed!")
+uv run ruff check src/ tests/
+
+# Type checking (MUST show "Success")
+uv run python -m mypy src/ --ignore-missing-imports
+```
 
 ---
 
@@ -149,7 +220,7 @@ uv run python -m mypy src/ --ignore-missing-imports
 ### Strategic Compaction
 - Use `/clear` between unrelated tasks
 - Manual `/compact` at 70% context (don't wait for 95%)
-- Add summary to TODO.md before compacting
+- Add summary to TODO.md BEFORE compacting
 
 ### Memory Checkpoints
 Before any large operation:
@@ -159,35 +230,47 @@ Before any large operation:
 3. Then proceed with large operation
 ```
 
-### If Context Gets Large
+---
+
+## SESSION END PROTOCOL
+
+<CRITICAL>
+Before ending ANY session, YOU MUST:
+</CRITICAL>
+
 ```
-/compact Focus on: current task, recent changes, test status
+1. Run ALL verification commands
+2. Commit any uncommitted work
+3. Update TODO.md with accurate status
+4. Leave clear notes for next session
+```
+
+### Session Handoff Format
+At session end, provide:
+```
+## SESSION HANDOFF
+
+### Completed This Session:
+- [x] Task 1
+- [x] Task 2
+
+### Current State:
+- Tests: X passed, Y failed
+- Lint: Clean/X errors
+- Types: Clean/X errors
+
+### Next Session Should:
+1. Start with [specific task]
+2. Be aware of [specific issue]
+3. Check [specific file] first
+
+### Uncommitted Changes:
+- None / List files
 ```
 
 ---
 
-## PROJECT STRUCTURE
-
-```
-solid-robot/
-├── backend/           # Python FastAPI backend
-│   ├── src/research_tool/
-│   │   ├── agent/     # LangGraph research agent
-│   │   ├── api/       # REST + WebSocket endpoints
-│   │   ├── core/      # Config, exceptions, logging
-│   │   ├── models/    # Pydantic models
-│   │   ├── services/  # LLM, Memory, Search
-│   │   └── utils/     # Retry, circuit breaker
-│   └── tests/         # pytest tests (216+ tests)
-├── gui/               # SwiftUI macOS app
-│   └── ResearchTool/
-├── TODO.md            # Task tracking (KEEP UPDATED)
-└── CLAUDE.md          # This file (READ FIRST)
-```
-
----
-
-## CURRENT STATUS
+## PROJECT STATUS
 
 | Phase | Status | Completion |
 |-------|--------|------------|
@@ -195,116 +278,105 @@ solid-robot/
 | Phase 4 | PARTIAL | ~75% |
 | Phase 5-7 | NOT STARTED | 0% |
 
-**See TODO.md for detailed task breakdown.**
+**Total TODOs:** 318
+**Completed:** 182 (57%)
+**Remaining:** 136 (43%)
 
 ---
 
-## TEST-DRIVEN DEVELOPMENT (TDD)
+## TDD - THE ONLY ACCEPTABLE PATTERN
 
-### The Only Acceptable Pattern
 ```
-1. Write test that describes expected behavior
-2. Run test → MUST FAIL (red)
-3. Write minimal code to pass
-4. Run test → MUST PASS (green)
-5. Refactor if needed
-6. Commit
+1. Write test → MUST FAIL (red)
+2. Write minimal code → MUST PASS (green)
+3. Refactor if needed
+4. Commit
 ```
 
-### Why TDD is Mandatory
-- Proves you understand the requirement
-- Prevents "it works on my machine"
-- Creates documentation via tests
-- Catches regressions immediately
+<ENFORCEMENT>
+Writing code before tests = violation.
+Tests that pass before implementation = tests are wrong.
+</ENFORCEMENT>
 
 ---
 
 ## SKILLS TO USE
 
-When relevant, invoke these skills:
-
-| Skill | When to Use |
-|-------|-------------|
-| `superpowers:brainstorming` | Before designing new features |
-| `superpowers:test-driven-development` | Before writing any code |
-| `superpowers:systematic-debugging` | When encountering bugs |
-| `superpowers:verification-before-completion` | Before claiming done |
-| `superpowers:requesting-code-review` | After completing features |
+| Skill | When | Command |
+|-------|------|---------|
+| Brainstorming | Before new features | `Skill(superpowers:brainstorming)` |
+| TDD | Before any code | `Skill(superpowers:test-driven-development)` |
+| Debugging | When bugs occur | `Skill(superpowers:systematic-debugging)` |
+| Verification | Before claiming done | `Skill(superpowers:verification-before-completion)` |
+| Code Review | After features | `Skill(superpowers:requesting-code-review)` |
 
 ---
 
-## COMMANDS REFERENCE
+## COMMANDS QUICK REFERENCE
 
 ```bash
-# Development
-cd backend && uv run python -m pytest tests/ -v      # Run tests
-cd backend && uv run ruff check src/ tests/          # Lint
-cd backend && uv run ruff check src/ tests/ --fix    # Auto-fix lint
-cd backend && uv run python -m mypy src/ --ignore-missing-imports  # Types
+# Development (from backend/)
+uv run python -m pytest tests/ -v           # Run tests
+uv run ruff check src/ tests/               # Lint
+uv run ruff check src/ tests/ --fix         # Auto-fix
+uv run python -m mypy src/ --ignore-missing-imports  # Types
 
 # Server
-cd backend && uv run uvicorn research_tool.main:app --reload
+uv run uvicorn research_tool.main:app --reload
 
 # Context Management
-/clear                    # Reset context (between tasks)
-/compact                  # Summarize context (at 70%)
-/context                  # Show context usage
+/clear                    # Reset (between tasks)
+/compact                  # Summarize (at 70%)
+/context                  # Show usage
 ```
-
----
-
-## NEXT TASK PROTOCOL
-
-When starting any task:
-
-1. **Read** TODO.md for current status
-2. **Pick** ONE uncompleted task
-3. **Plan** using TodoWrite (break into chunks)
-4. **Explore** relevant code first
-5. **Test** write tests before implementation
-6. **Implement** in small chunks
-7. **Verify** run ALL verification commands
-8. **Commit** only when verified
-9. **Update** TODO.md with accurate status
-
----
-
-## HONEST COMMUNICATION
-
-### What to Say
-- "This approach has these tradeoffs: ..."
-- "I see a potential issue with ..."
-- "Before implementing, I need to understand ..."
-- "The tests show this is broken because ..."
-
-### What NOT to Say
-- "Looks great!" (without verification)
-- "That should work!" (without testing)
-- "Almost done!" (when tests fail)
-- "Just a quick fix!" (without tests)
 
 ---
 
 ## ENFORCEMENT CHECKLIST
 
-Before EVERY response, verify:
+<CRITICAL>
+Before EVERY response, verify ALL of these:
+</CRITICAL>
+
 - [ ] Did I read existing code before suggesting changes?
-- [ ] Did I run tests before claiming something works?
-- [ ] Did I avoid banned sycophantic phrases?
 - [ ] Did I use TodoWrite for task tracking?
+- [ ] Did I run tests before claiming success?
+- [ ] Did I show evidence for my claims?
+- [ ] Did I avoid ALL banned phrases?
 - [ ] Is my chunk size ≤3 files?
 - [ ] Did I commit after verification?
+- [ ] Did I update TODO.md?
+
+**If ANY checkbox is unchecked, FIX IT before responding.**
+
+---
+
+## REMINDER: RULES APPLY ALWAYS
+
+<CRITICAL>
+These rules apply to:
+- Every response
+- Every code change
+- Every claim
+- Every session
+
+There are NO exceptions.
+"Just this once" = violation.
+"It's a small change" = violation.
+"I'll test later" = violation.
+</CRITICAL>
 
 ---
 
 *This file is law. Follow it exactly.*
+*Violations trigger "AIRPORT" reset.*
 *Last updated: 2025-12-09*
 
-## Sources & References
+---
 
-Best practices derived from:
+## Sources
+
 - [Anthropic Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
 - [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)
 - [Claude Code Setup Templates](https://github.com/centminmod/my-claude-code-setup)
 - [Claude Rules Template](https://gist.github.com/tsdevau/673876d17d344f97ba3473bc081bd1e5)
-- [Claude Code Context Management](https://stevekinney.com/courses/ai-development/claude-code-compaction)
