@@ -4,6 +4,11 @@ from .clarification import (
     extract_ambiguous_terms,
     should_ask_for_clarification,
 )
+from .config_loader import (
+    ConfigLoader,
+    load_domain_config,
+    merge_with_overrides,
+)
 from .domain_detector import (
     DetectedDomain,
     detect_domain,
@@ -23,4 +28,7 @@ __all__ = [
     "detect_domain_with_llm",
     "get_domain_keywords",
     "get_domain_configuration",
+    "ConfigLoader",
+    "load_domain_config",
+    "merge_with_overrides",
 ]
