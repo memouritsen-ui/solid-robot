@@ -363,11 +363,11 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #215 Test: Correct config loaded for domain -- 19 tests passing 2025-12-09
 
 ### Cross-Verification
-- [ ] #216 Create /backend/src/research_tool/agent/nodes/verify.py
-- [ ] #217 Implement fact extraction
-- [ ] #218 Implement cross-source comparison
-- [ ] #219 Implement contradiction detection
-- [ ] #220 Test: Contradictions detected in test data
+- [x] #216 Create /backend/src/research_tool/agent/nodes/verify.py -- IMPLEMENTED 2025-12-09
+- [x] #217 Implement fact extraction -- extract_facts_from_content() 2025-12-09
+- [x] #218 Implement cross-source comparison -- calculate_source_agreement() 2025-12-09
+- [x] #219 Implement contradiction detection -- detect_contradictions() 2025-12-09
+- [x] #220 Test: Contradictions detected in test data -- 18 tests passing 2025-12-09
 
 ### Confidence Scoring
 - [ ] #221 Implement source-based confidence
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 11/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 16/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~211 (~69%)
-**Tests**: 346 passing (2025-12-09)
+**Completed**: ~216 (~70%)
+**Tests**: 364 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
