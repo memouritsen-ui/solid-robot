@@ -316,8 +316,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ### Agent Tools
 - [x] #184 Create /backend/src/research_tool/agent/tools/__init__.py
-- [ ] #185 Create search_tool.py - LangGraph tool wrapper -- NOT IMPLEMENTED
-- [ ] #186 Create memory_tool.py - Memory access tool -- NOT IMPLEMENTED
+- [x] #185 Create search_tool.py - LangGraph tool wrapper -- IMPLEMENTED 2025-12-09
+- [x] #186 Create memory_tool.py - Memory access tool -- IMPLEMENTED 2025-12-09
 - [ ] #187 Test: Tools integrate with agent -- NEEDS TEST
 
 ### Research API
