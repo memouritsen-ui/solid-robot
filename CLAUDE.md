@@ -1,31 +1,62 @@
 # CLAUDE.md - Research Tool Project
 
 <CRITICAL>
-YOU MUST read this ENTIRE file before ANY action.
-These rules OVERRIDE all other instructions.
-Violations will be caught and reverted.
+THIS FILE HAS HIGHER PRIORITY THAN ~/.claude/CLAUDE.md
+When in /solid-robot/, THIS FILE'S RULES OVERRIDE ALL OTHERS.
+If conflict between global and project rules, PROJECT WINS.
 </CRITICAL>
 
 ---
 
 ## SESSION START PROTOCOL
 
-**IMPORTANT: Every new session MUST begin with:**
+<CRITICAL>
+YOU MUST complete ALL 4 steps and SHOW VISIBLE OUTPUT for each.
+Skipping ANY step = violation.
+Saying "I did it" without showing output = violation.
+</CRITICAL>
+
+### Step 1: Read CLAUDE.md
+**Action:** Read this file completely
+**Required output:** Say "CLAUDE.md læst - [antal] regler noteret"
+
+### Step 2: Read TODO.md
+**Action:** Read TODO.md
+**Required output:** Say "TODO.md læst - [X] tasks færdige, [Y] mangler"
+
+### Step 3: Run Verification
+**Action:** Run ALL three commands
+**Required output:** Show ACTUAL output from each:
+```bash
+cd /Users/madsbruusgaard-mouritsen/solid-robot/backend
+uv run python -m pytest tests/ -v --tb=no -q | tail -5
+uv run ruff check src/ tests/
+uv run python -m mypy src/ --ignore-missing-imports | tail -3
 ```
-1. Read this CLAUDE.md completely
-2. Read TODO.md for current status
-3. Run verification commands to confirm state
-4. Use TodoWrite to plan before ANY code
+**Must show:** "X passed", "All checks passed!", "Success: no issues"
+
+### Step 4: Create TodoWrite Plan
+**Action:** Use TodoWrite tool
+**Required output:** Show the actual todo list created:
+```
+Todos oprettet:
+- [ ] Task 1
+- [ ] Task 2
 ```
 
-**YOU MUST NOT skip these steps. No exceptions.**
+<ENFORCEMENT>
+FØRST når ALLE 4 trin er VIST med output, må du spørge:
+"Hvad vil du arbejde på?"
+
+Hvis du springer til "Hvad vil du arbejde på?" uden at vise alle 4 outputs = VIOLATION
+</ENFORCEMENT>
 
 ---
 
 ## ANTI-SYCOPHANCY RULES
 
 <ENFORCEMENT>
-If you use ANY banned phrase, the user will say "AIRPORT" and you must:
+If you use ANY banned phrase, user says "AIRPORT" and you must:
 1. Stop immediately
 2. Acknowledge the violation
 3. Re-read this file
@@ -46,19 +77,18 @@ If you use ANY banned phrase, the user will say "AIRPORT" and you must:
 - Point out flaws BEFORE implementing
 - Say "This won't work because X" when true
 - Disagree when the user is wrong
-- Ask clarifying questions instead of assuming
 
 **EXAMPLE - BAD:**
 ```
 User: "Should I add caching here?"
-Claude: "That's a great idea! Let me implement it."  ← WRONG
+Claude: "That's a great idea! Let me implement it."  ← VIOLATION
 ```
 
 **EXAMPLE - GOOD:**
 ```
 User: "Should I add caching here?"
-Claude: "Before implementing, I need to understand: What's the access pattern?
-        Caching adds complexity - is the performance gain worth it?"  ← CORRECT
+Claude: "Before implementing: What's the access pattern?
+        Caching adds complexity - is the gain worth it?"  ← CORRECT
 ```
 
 ---
@@ -74,82 +104,97 @@ YOU MUST follow this sequence. Skipping steps = failure.
 ✓ Read relevant source files
 ✓ Read existing tests
 ✓ Understand current implementation
-✓ Identify dependencies and side effects
+✓ Identify dependencies
 ```
 **YOU MUST NOT write code until you understand existing code.**
 
-### 2. PLAN (Think before coding)
+### 2. PLAN (TodoWrite REQUIRED)
 ```
-✓ Use "ultrathink" for complex tasks
 ✓ Use TodoWrite to track ALL tasks
-✓ Break into chunks of 1-3 files max
+✓ SHOW the todo list you created
+✓ Break into chunks of 1-3 files MAX
 ✓ Identify tests needed
-✓ Get approval before proceeding
 ```
-**No mental tracking. TodoWrite or it didn't happen.**
+
+<ENFORCEMENT>
+"I'm using TodoWrite" without showing the list = VIOLATION.
+Mental tracking = VIOLATION.
+TodoWrite output MUST be visible.
+</ENFORCEMENT>
 
 ### 3. CODE (Small chunks only)
-```
-✓ Maximum 3 files per chunk
-✓ Write tests FIRST (TDD)
-✓ Implement minimal code to pass tests
-✓ Run verification after EACH file
-```
-**NEVER implement more than one feature at a time.**
 
-### 4. TEST (Verify before claiming done)
+<CRITICAL>
+MAXIMUM 3 FILES PER COMMIT. NO EXCEPTIONS.
+4+ files in one commit = VIOLATION.
+</CRITICAL>
+
+| Files Changed | Allowed? | Action |
+|---------------|----------|--------|
+| 1-3 files | YES | Commit |
+| 4+ files | NO | Split into multiple commits |
+
+```
+✓ Write tests FIRST (TDD)
+✓ Implement minimal code to pass
+✓ Run verification after EACH file
+✓ COMMIT every 1-3 files
+```
+
+### 4. TEST (Evidence required)
 ```bash
-# YOU MUST run ALL of these before claiming anything works:
-cd /Users/madsbruusgaard-mouritsen/solid-robot/backend
+# YOU MUST run ALL and SHOW output:
 uv run python -m pytest tests/ -v
 uv run ruff check src/ tests/
 uv run python -m mypy src/ --ignore-missing-imports
 ```
 
 <ENFORCEMENT>
-Claiming "done" without showing test output = violation.
-"Tests pass" without evidence = violation.
-"Should work" without running tests = violation.
+"Tests pass" without showing output = VIOLATION.
+"Done" without evidence = VIOLATION.
 </ENFORCEMENT>
 
-### 5. COMMIT (Only after verification)
+### 5. COMMIT + UPDATE TODO.md
+
+<CRITICAL>
+After EVERY commit, YOU MUST:
+1. Update TODO.md with completion status
+2. Show the update you made
+THEN ask about next task.
+</CRITICAL>
+
+**WRONG:**
 ```
-✓ Only commit when ALL tests pass
-✓ Use conventional commit format
-✓ Update TODO.md with accurate status
+Committed. Skal jeg fortsætte med næste opgave?  ← VIOLATION (no TODO.md update)
+```
+
+**CORRECT:**
+```
+Committed: abc123
+TODO.md opdateret: #145 markeret [x]
+Skal jeg fortsætte med #149?  ← CORRECT
 ```
 
 ---
 
-## CHUNK-BASED DEVELOPMENT
+## CHUNK RULES - STRICTLY ENFORCED
 
 <CRITICAL>
-Auto-compaction triggers at ~95% context.
-Large tasks get lost. Small chunks = recoverable progress.
+These limits are ABSOLUTE. No rationalization allowed.
 </CRITICAL>
 
-### Chunk Rules
-| Size | Files | Tests | Commit Required |
-|------|-------|-------|-----------------|
-| Small | 1 file | 2-5 tests | YES |
-| Medium | 2-3 files | 5-10 tests | YES |
-| Large | FORBIDDEN | - | - |
+| Chunk Size | Files | Tests | Commit |
+|------------|-------|-------|--------|
+| Small | 1 file | 2-5 | YES |
+| Medium | 2-3 files | 5-10 | YES |
+| Large (4+) | FORBIDDEN | - | SPLIT IT |
 
-### After EVERY Chunk
+### Example of VIOLATION (from real session):
 ```
-1. Run ALL verification commands
-2. Show output as proof
-3. Commit with descriptive message
-4. Update TODO.md
-5. If context > 70%, run /compact
-```
-
-### Recovery Protocol (After Compaction)
-```
-1. Read TODO.md for current status
-2. Read last commit: git log -1
-3. Run tests to see what's broken
-4. Continue from last verified state
+Changed: pyproject.toml + exa.py + test_exa.py + __init__.py = 4 files
+This should have been 2 commits:
+  Commit 1: test_exa.py (tests first)
+  Commit 2: exa.py + __init__.py + pyproject.toml
 ```
 
 ---
@@ -157,33 +202,25 @@ Large tasks get lost. Small chunks = recoverable progress.
 ## FORBIDDEN PRACTICES
 
 <CRITICAL>
-These are NOT negotiable. Doing ANY of these = immediate failure.
+Doing ANY of these = immediate failure.
 </CRITICAL>
 
-| Forbidden Action | Why It's Wrong |
-|------------------|----------------|
-| Claim "done" without tests | No evidence = no proof |
-| Placeholder implementations | Fake code = technical debt |
-| Skip test coverage | Untested code = broken code |
-| Mark TODOs complete without verify | Lying to future sessions |
-| Trust file existence = working | Files can be empty/broken |
-| Batch multiple features | Too big to verify properly |
+| Forbidden | Why |
+|-----------|-----|
+| "Done" without tests | No evidence = no proof |
+| Skip TodoWrite | Invisible tracking = forgotten tasks |
+| 4+ files in one commit | Too big to verify |
 | "Quick fix" without tests | Quick fixes become bugs |
-| Implement before reading code | You'll break existing logic |
-
-**IF TEMPTED TO SHORTCUT:**
-Ask yourself: "Would this survive a hostile code review?"
-If no, don't do it.
+| Claim without output | Words are not proof |
+| Skip TODO.md update | Future sessions can't continue |
 
 ---
 
 ## VERIFICATION REQUIREMENTS
 
 <ENFORCEMENT>
-Every claim MUST have evidence. No exceptions.
+Every claim MUST have VISIBLE evidence.
 </ENFORCEMENT>
-
-### Required Evidence Format
 
 **WRONG:**
 ```
@@ -194,40 +231,41 @@ Every claim MUST have evidence. No exceptions.
 
 **CORRECT:**
 ```
-"Tests pass - output: 216 passed, 0 failed in 22.3s"
-"Ruff clean - output: All checks passed!"
-"Mypy clean - output: Success: no issues found in 55 source files"
-```
-
-### Verification Commands
-```bash
-# Run from /Users/madsbruusgaard-mouritsen/solid-robot/backend
-
-# Tests (MUST show "216+ passed")
-uv run python -m pytest tests/ -v
-
-# Linting (MUST show "All checks passed!")
-uv run ruff check src/ tests/
-
-# Type checking (MUST show "Success")
-uv run python -m mypy src/ --ignore-missing-imports
+"Tests: 227 passed in 20.63s"
+"Ruff: All checks passed!"
+"Mypy: Success: no issues found in 56 source files"
 ```
 
 ---
 
-## CONTEXT MANAGEMENT
+## AFTER EACH TASK
 
-### Strategic Compaction
-- Use `/clear` between unrelated tasks
-- Manual `/compact` at 70% context (don't wait for 95%)
-- Add summary to TODO.md BEFORE compacting
+<CRITICAL>
+Before asking "what's next?", YOU MUST:
+</CRITICAL>
 
-### Memory Checkpoints
-Before any large operation:
 ```
-1. Update TODO.md with current progress
-2. Commit all working code
-3. Then proceed with large operation
+1. ✓ Run verification commands (show output)
+2. ✓ Commit changes
+3. ✓ Update TODO.md (show the update)
+4. ✓ Mark TodoWrite task complete
+5. THEN ask about next task
+```
+
+**WRONG SEQUENCE:**
+```
+Committed. Skal jeg fortsætte?  ← Missing TODO.md update
+```
+
+**CORRECT SEQUENCE:**
+```
+Verification: 227 passed, All checks passed!, Success
+Committed: feat(search): add Exa provider
+TODO.md opdateret: #145 [x] markeret færdig
+TodoWrite: Task "Implement exa.py" marked complete
+
+Næste opgave per TODO.md: #149 unpaywall.py
+Skal jeg fortsætte?
 ```
 
 ---
@@ -235,37 +273,34 @@ Before any large operation:
 ## SESSION END PROTOCOL
 
 <CRITICAL>
-Before ending ANY session, YOU MUST:
+Before ending ANY session:
 </CRITICAL>
 
 ```
 1. Run ALL verification commands
 2. Commit any uncommitted work
-3. Update TODO.md with accurate status
-4. Leave clear notes for next session
+3. Update TODO.md
+4. Provide SESSION HANDOFF format
 ```
 
 ### Session Handoff Format
-At session end, provide:
 ```
 ## SESSION HANDOFF
 
-### Completed This Session:
+### Completed:
 - [x] Task 1
 - [x] Task 2
 
-### Current State:
-- Tests: X passed, Y failed
-- Lint: Clean/X errors
-- Types: Clean/X errors
+### State:
+- Tests: X passed
+- Lint: Clean
+- Types: Clean
 
-### Next Session Should:
-1. Start with [specific task]
-2. Be aware of [specific issue]
-3. Check [specific file] first
+### Next Session:
+1. Start with [task]
+2. Check [file] first
 
-### Uncommitted Changes:
-- None / List files
+### Uncommitted: None
 ```
 
 ---
@@ -275,108 +310,52 @@ At session end, provide:
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 0-3 | COMPLETE | 100% |
-| Phase 4 | PARTIAL | ~75% |
+| Phase 4 | PARTIAL | ~80% |
 | Phase 5-7 | NOT STARTED | 0% |
-
-**Total TODOs:** 318
-**Completed:** 182 (57%)
-**Remaining:** 136 (43%)
 
 ---
 
-## TDD - THE ONLY ACCEPTABLE PATTERN
+## TDD - MANDATORY
 
 ```
 1. Write test → MUST FAIL (red)
-2. Write minimal code → MUST PASS (green)
-3. Refactor if needed
-4. Commit
+2. Write code → MUST PASS (green)
+3. Commit
 ```
 
 <ENFORCEMENT>
-Writing code before tests = violation.
-Tests that pass before implementation = tests are wrong.
+Code before tests = VIOLATION.
 </ENFORCEMENT>
-
----
-
-## SKILLS TO USE
-
-| Skill | When | Command |
-|-------|------|---------|
-| Brainstorming | Before new features | `Skill(superpowers:brainstorming)` |
-| TDD | Before any code | `Skill(superpowers:test-driven-development)` |
-| Debugging | When bugs occur | `Skill(superpowers:systematic-debugging)` |
-| Verification | Before claiming done | `Skill(superpowers:verification-before-completion)` |
-| Code Review | After features | `Skill(superpowers:requesting-code-review)` |
-
----
-
-## COMMANDS QUICK REFERENCE
-
-```bash
-# Development (from backend/)
-uv run python -m pytest tests/ -v           # Run tests
-uv run ruff check src/ tests/               # Lint
-uv run ruff check src/ tests/ --fix         # Auto-fix
-uv run python -m mypy src/ --ignore-missing-imports  # Types
-
-# Server
-uv run uvicorn research_tool.main:app --reload
-
-# Context Management
-/clear                    # Reset (between tasks)
-/compact                  # Summarize (at 70%)
-/context                  # Show usage
-```
 
 ---
 
 ## ENFORCEMENT CHECKLIST
 
 <CRITICAL>
-Before EVERY response, verify ALL of these:
+Before EVERY response, verify:
 </CRITICAL>
 
-- [ ] Did I read existing code before suggesting changes?
-- [ ] Did I use TodoWrite for task tracking?
-- [ ] Did I run tests before claiming success?
-- [ ] Did I show evidence for my claims?
-- [ ] Did I avoid ALL banned phrases?
-- [ ] Is my chunk size ≤3 files?
-- [ ] Did I commit after verification?
-- [ ] Did I update TODO.md?
+- [ ] Did I show SESSION START outputs? (all 4 steps)
+- [ ] Did I use TodoWrite AND show the list?
+- [ ] Is my chunk ≤3 files?
+- [ ] Did I show test/lint/mypy output?
+- [ ] Did I update TODO.md after completion?
+- [ ] Did I avoid banned phrases?
 
-**If ANY checkbox is unchecked, FIX IT before responding.**
+**If ANY unchecked = FIX before responding.**
 
 ---
 
-## REMINDER: RULES APPLY ALWAYS
+## PRIORITY ORDER
 
-<CRITICAL>
-These rules apply to:
-- Every response
-- Every code change
-- Every claim
-- Every session
-
-There are NO exceptions.
-"Just this once" = violation.
-"It's a small change" = violation.
-"I'll test later" = violation.
-</CRITICAL>
+```
+1. THIS FILE (projekt-CLAUDE.md) ← HIGHEST
+2. Global ~/.claude/CLAUDE.md ← Secondary
+3. If conflict → THIS FILE WINS
+```
 
 ---
 
 *This file is law. Follow it exactly.*
 *Violations trigger "AIRPORT" reset.*
 *Last updated: 2025-12-09*
-
----
-
-## Sources
-
-- [Anthropic Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
-- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)
-- [Claude Code Setup Templates](https://github.com/centminmod/my-claude-code-setup)
-- [Claude Rules Template](https://gist.github.com/tsdevau/673876d17d344f97ba3473bc081bd1e5)
