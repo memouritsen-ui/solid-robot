@@ -130,3 +130,113 @@ class SourceLearning:
             "source_name": source_name,
             "domain": domain
         }
+
+
+class PostResearchLearner:
+    """Trigger learning updates after research completes.
+
+    Analyzes research results and updates source effectiveness scores
+    based on the quality and quantity of facts extracted from each source.
+    """
+
+    def __init__(self, source_learning: SourceLearning):
+        """Initialize post-research learner.
+
+        Args:
+            source_learning: SourceLearning instance for updating scores
+        """
+        self.source_learning = source_learning
+
+    def calculate_source_quality(
+        self,
+        source_name: str,
+        facts: list[dict[str, Any]]
+    ) -> float:
+        """Calculate quality score for a source based on extracted facts.
+
+        Args:
+            source_name: Name of the source (case-insensitive)
+            facts: List of extracted facts with 'source' and 'confidence' keys
+
+        Returns:
+            float: Average confidence score of facts from this source,
+                   or 0.0 if no facts were extracted
+        """
+        normalized_name = source_name.lower()
+        source_facts = [
+            f for f in facts
+            if f.get("source", "").lower() == normalized_name
+        ]
+
+        if not source_facts:
+            return 0.0
+
+        confidences: list[float] = [
+            float(f.get("confidence", 0.5)) for f in source_facts
+        ]
+        return sum(confidences) / len(confidences)
+
+    async def trigger_learning(
+        self,
+        research_result: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Trigger learning updates based on research results.
+
+        Analyzes the research result and updates source effectiveness
+        for each source that was queried.
+
+        Args:
+            research_result: Research result dict containing:
+                - domain: Domain of the research
+                - sources_queried: List of source names that were used
+                - facts_extracted: List of facts with source and confidence
+                - access_failures: Optional list of access failures
+
+        Returns:
+            dict: Summary of learning updates with 'sources_updated' count
+        """
+        domain = research_result.get("domain", "general")
+        sources_queried = research_result.get("sources_queried", [])
+        facts_extracted = research_result.get("facts_extracted", [])
+        access_failures = research_result.get("access_failures", [])
+
+        if not sources_queried:
+            return {"sources_updated": 0}
+
+        # Build set of sources with access failures
+        failed_sources = {
+            f.get("source", "").lower()
+            for f in access_failures
+        }
+
+        sources_updated = 0
+
+        for source_name in sources_queried:
+            normalized_name = source_name.lower()
+
+            # Check if source had access failures
+            if normalized_name in failed_sources:
+                # Mark as failed
+                await self.source_learning.update_effectiveness(
+                    source_name=normalized_name,
+                    domain=domain,
+                    success=False,
+                    quality_score=0.0
+                )
+                sources_updated += 1
+                continue
+
+            # Calculate quality from extracted facts
+            quality = self.calculate_source_quality(source_name, facts_extracted)
+
+            # Update effectiveness
+            success = quality > 0.0
+            await self.source_learning.update_effectiveness(
+                source_name=normalized_name,
+                domain=domain,
+                success=success,
+                quality_score=quality
+            )
+            sources_updated += 1
+
+        return {"sources_updated": sources_updated}
