@@ -1,8 +1,8 @@
 """Tests for Playwright crawler."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+
+import pytest
 
 from research_tool.services.search.crawler import PlaywrightCrawler
 
@@ -214,6 +214,7 @@ class TestCrawlerIntegration:
     async def test_fetch_page_handles_timeout(self) -> None:
         """fetch_page raises TimeoutError on timeout."""
         from playwright.async_api import TimeoutError as PlaywrightTimeout
+
         from research_tool.core.exceptions import TimeoutError
 
         crawler = PlaywrightCrawler()

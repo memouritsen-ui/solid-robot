@@ -1,6 +1,5 @@
 """Tests for memory system (LanceDB + SQLite + Learning)."""
 
-import os
 import tempfile
 from pathlib import Path
 
