@@ -305,8 +305,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #175 Implement SaturationMetrics dataclass
 - [x] #176 Implement calculate_saturation() function
 - [x] #177 Implement should_stop() function
-- [ ] #178 Test: Saturation detected at threshold -- NEEDS TEST
-- [ ] #179 Test: Research continues below threshold -- NEEDS TEST
+- [x] #178 Test: Saturation detected at threshold -- IMPLEMENTED 2025-12-09
+- [x] #179 Test: Research continues below threshold -- IMPLEMENTED 2025-12-09
 
 ### Graph Assembly
 - [x] #180 Wire all nodes in graph.py
