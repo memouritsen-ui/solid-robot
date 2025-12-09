@@ -243,7 +243,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ### Search Provider Implementations
 - [x] #144 Create tavily.py - Tavily search provider
-- [ ] #145 Create exa.py - Exa search provider -- NOT IMPLEMENTED
+- [x] #145 Create exa.py - Exa search provider -- IMPLEMENTED 2025-12-09
 - [x] #146 Create semantic_scholar.py - with 1 RPS rate limit
 - [x] #147 Create pubmed.py - PubMed provider
 - [x] #148 Create arxiv.py - arXiv provider
@@ -259,6 +259,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
   - test_pubmed.py (9 tests)
   - test_semantic_scholar.py (10 tests)
   - test_crawler.py (18 tests)
+  - test_exa.py (11 tests) -- ADDED 2025-12-09
 
 ### Obstacle Handling
 - [x] #153 Create /backend/src/research_tool/utils/retry.py (tenacity config)
@@ -510,14 +511,14 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 1: Foundation | #6-47 | 41/42 | ✅ COMPLETE (Swift build needs manual verify) |
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
-| Phase 4: Research | #136-204 | 52/69 | ⚠️ 75% COMPLETE |
+| Phase 4: Research | #136-204 | 53/69 | ⚠️ 77% COMPLETE |
 | Phase 5: Intelligence | #205-239 | 0/35 | ❌ NOT STARTED |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~183 (~60%)
-**Tests**: 216 passing (2025-12-09)
+**Completed**: ~184 (~60%)
+**Tests**: 227 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
@@ -525,7 +526,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ## TEST COVERAGE BREAKDOWN
 
-### Unit Tests (20 files, 216 tests)
+### Unit Tests (21 files, 227 tests)
 | File | Tests | Category |
 |------|-------|----------|
 | test_health.py | 2 | API |
@@ -541,6 +542,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | test_arxiv.py | 7 | Search |
 | test_pubmed.py | 9 | Search |
 | test_semantic_scholar.py | 10 | Search |
+| test_exa.py | 11 | Search |
 | test_clarify.py | 9 | Agent |
 | test_plan.py | 8 | Agent |
 | test_collect.py | 8 | Agent |
