@@ -199,11 +199,16 @@ class TestCrawlerIntegration:
         mock_context.close = AsyncMock()
         mock_page.context = mock_context
 
-        with patch.object(crawler, '_create_stealth_page', return_value=mock_page):
-            with patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter:
-                mock_limiter.acquire = AsyncMock()
-                with patch('research_tool.services.search.crawler.extract', return_value="Extracted content"):
-                    result = await crawler.fetch_page("https://example.com")
+        with (
+            patch.object(crawler, '_create_stealth_page', return_value=mock_page),
+            patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter,
+            patch(
+                'research_tool.services.search.crawler.extract',
+                return_value="Extracted content"
+            ),
+        ):
+            mock_limiter.acquire = AsyncMock()
+            result = await crawler.fetch_page("https://example.com")
 
         assert result["url"] == "https://example.com"
         assert result["title"] == "Test Page"
@@ -227,11 +232,13 @@ class TestCrawlerIntegration:
         mock_context.close = AsyncMock()
         mock_page.context = mock_context
 
-        with patch.object(crawler, '_create_stealth_page', return_value=mock_page):
-            with patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter:
-                mock_limiter.acquire = AsyncMock()
-                with pytest.raises(TimeoutError):
-                    await crawler.fetch_page("https://example.com")
+        with (
+            patch.object(crawler, '_create_stealth_page', return_value=mock_page),
+            patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter,
+        ):
+            mock_limiter.acquire = AsyncMock()
+            with pytest.raises(TimeoutError):
+                await crawler.fetch_page("https://example.com")
 
     @pytest.mark.asyncio
     async def test_fetch_page_handles_rate_limit(self) -> None:
@@ -251,11 +258,13 @@ class TestCrawlerIntegration:
         mock_context.close = AsyncMock()
         mock_page.context = mock_context
 
-        with patch.object(crawler, '_create_stealth_page', return_value=mock_page):
-            with patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter:
-                mock_limiter.acquire = AsyncMock()
-                with pytest.raises(RateLimitError):
-                    await crawler.fetch_page("https://example.com")
+        with (
+            patch.object(crawler, '_create_stealth_page', return_value=mock_page),
+            patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter,
+        ):
+            mock_limiter.acquire = AsyncMock()
+            with pytest.raises(RateLimitError):
+                await crawler.fetch_page("https://example.com")
 
     @pytest.mark.asyncio
     async def test_fetch_page_handles_access_denied(self) -> None:
@@ -275,8 +284,10 @@ class TestCrawlerIntegration:
         mock_context.close = AsyncMock()
         mock_page.context = mock_context
 
-        with patch.object(crawler, '_create_stealth_page', return_value=mock_page):
-            with patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter:
-                mock_limiter.acquire = AsyncMock()
-                with pytest.raises(AccessDeniedError):
-                    await crawler.fetch_page("https://example.com")
+        with (
+            patch.object(crawler, '_create_stealth_page', return_value=mock_page),
+            patch('research_tool.services.search.crawler.rate_limiter') as mock_limiter,
+        ):
+            mock_limiter.acquire = AsyncMock()
+            with pytest.raises(AccessDeniedError):
+                await crawler.fetch_page("https://example.com")

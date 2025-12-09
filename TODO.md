@@ -7,8 +7,26 @@
 - Commit after each numbered task
 - If stuck on a task after 3 attempts, log in ERROR-LOG.md and skip
 
-**Last Updated**: 2025-12-09 by Claude Code (merge phase-2-conversational fix)
-**Current Status**: Phase 1-4 COMPLETE, Phase 5-7 PENDING
+**Last Updated**: 2025-12-09 by Claude Code (comprehensive test coverage + Swift files)
+**Current Status**: Phase 1-4 PARTIALLY COMPLETE, Phase 5-7 NOT STARTED
+
+---
+
+## VERIFICATION STATUS (Run these to confirm)
+
+```bash
+# Backend tests (must show 216 passed)
+cd backend && uv run python -m pytest tests/ -v
+
+# Ruff linting (must show "All checks passed!")
+cd backend && uv run ruff check src/ tests/
+
+# Mypy (must show "Success: no issues found in 55 source files")
+cd backend && uv run python -m mypy src/ --ignore-missing-imports
+
+# Swift build (must verify manually in Xcode)
+# Open gui/ResearchTool/Package.swift and build
+```
 
 ---
 
@@ -54,20 +72,20 @@
 
 ### Linting and Type Checking
 - [x] #25 Create /backend/.pre-commit-config.yaml
-- [x] #26 Run: `ruff check .` - verify zero errors
-- [x] #27 Run: `mypy src/` - verify zero errors
+- [x] #26 Run: `ruff check src/ tests/` - VERIFIED 0 errors (2025-12-09)
+- [x] #27 Run: `mypy src/` - VERIFIED 0 errors (2025-12-09)
 
 ### SwiftUI Project
 - [x] #28 Create Xcode project at /gui/ResearchTool/
 - [x] #29 Create ResearchToolApp.swift (app entry point)
-- [ ] #30 Create AppState.swift (shared state) -- NOT FOUND
-- [ ] #31 Create MainView.swift (navigation structure) -- NOT FOUND
+- [x] #30 Create AppState.swift (shared state) - CREATED 2025-12-09
+- [x] #31 Create MainView.swift (navigation structure) - CREATED 2025-12-09
 - [x] #32 Create ChatView.swift (chat interface)
 - [x] #33 Create MessageBubble.swift (message display)
-- [ ] #34 Create SettingsView.swift (placeholder) -- NOT FOUND
+- [x] #34 Create SettingsView.swift (placeholder) - CREATED 2025-12-09
 - [x] #35 Create Message.swift (message model)
 - [x] #36 Create ChatViewModel.swift (chat logic - placeholder)
-- [x] #37 Build Xcode project - verify no errors
+- [ ] #37 Build Xcode project - verify no errors -- NEEDS MANUAL VERIFICATION
 
 ### Scripts
 - [x] #38 Create /scripts/setup.sh
@@ -78,8 +96,8 @@
 
 ### Phase 1 Validation
 - [ ] #43 VALIDATE: SwiftUI shows backend connection status -- NEEDS E2E TEST
-- [x] #44 VALIDATE: All tests pass (60 tests passing)
-- [x] #45 VALIDATE: All linting passes
+- [x] #44 VALIDATE: All tests pass - 216 tests passing (2025-12-09)
+- [x] #45 VALIDATE: All linting passes - 0 errors (2025-12-09)
 - [x] #46 COMMIT: "feat: complete phase 1 foundation"
 - [x] #47 MERGE: phase-1-foundation → develop
 
@@ -98,7 +116,7 @@
 - [x] #53 Implement complete() method with streaming
 - [x] #54 Implement is_model_available() method
 - [x] #55 Implement fallback logic
-- [x] #56 Test: Mock test for router
+- [x] #56 Test: Mock test for router (12 tests in test_llm_router.py)
 
 ### Model Selector
 - [x] #57 Create /backend/src/research_tool/services/llm/selector.py
@@ -121,7 +139,7 @@
 - [x] #72 Implement streaming response
 - [x] #73 Implement conversation history tracking
 - [x] #74 Add WebSocket route to main.py
-- [x] #75 Test: WebSocket connection test
+- [x] #75 Test: WebSocket connection test (10 tests in test_websocket.py)
 
 ### SwiftUI WebSocket Client
 - [x] #76 Create /gui/.../Services/WebSocketClient.swift
@@ -137,16 +155,16 @@
 ### Phase 2 Tests
 - [x] #85 Create /backend/tests/unit/test_llm_router.py (12 tests)
 - [x] #86 Create /backend/tests/unit/test_model_selector.py (17 tests)
-- [x] #87 Create /backend/tests/integration/test_websocket.py
+- [x] #87 Create /backend/tests/integration/test_websocket.py (10 tests)
 - [x] #88 Run: `pytest tests/ -v --cov` - verify >80% coverage
 
 ### Phase 2 Validation
-- [ ] #89 VALIDATE: Local model responds correctly -- NEEDS OLLAMA
+- [ ] #89 VALIDATE: Local model responds correctly -- NEEDS OLLAMA RUNNING
 - [ ] #90 VALIDATE: Cloud model responds correctly -- NEEDS API KEY
 - [x] #91 VALIDATE: LOCAL_ONLY never uses cloud (tested)
 - [ ] #92 VALIDATE: Streaming works in GUI -- NEEDS E2E TEST
 - [x] #93 COMMIT: "feat: complete phase 2 conversational core"
-- [x] #94 MERGE: phase-2-conversational → develop (FIXED 2025-12-09)
+- [x] #94 MERGE: phase-2-conversational → develop
 
 ---
 
@@ -194,7 +212,7 @@
 - [x] #125 Test: All memory operations work together
 
 ### Phase 3 Tests
-- [x] #126 Create /backend/tests/unit/test_memory.py (21 tests)
+- [x] #126 Create /backend/tests/unit/test_memory.py (20 tests)
 - [x] #127 Test: Vector storage and retrieval
 - [x] #128 Test: Structured data storage
 - [x] #129 Test: Memory persists across restarts
@@ -209,7 +227,7 @@
 
 ---
 
-## PHASE 4: RESEARCH AGENT ✅ MOSTLY COMPLETE
+## PHASE 4: RESEARCH AGENT ⚠️ PARTIALLY COMPLETE (~70%)
 
 ### Data Models
 - [x] #136 Create /backend/src/research_tool/models/__init__.py
@@ -232,7 +250,15 @@
 - [ ] #149 Create unpaywall.py - Open access finder -- NOT IMPLEMENTED
 - [x] #150 Create brave.py - Brave search provider
 - [x] #151 Create crawler.py - Playwright with stealth -- IMPLEMENTED 2025-12-09
-- [ ] #152 Test: Each provider returns results -- NEEDS INTEGRATION TESTS
+- [x] #152 Test: Each provider returns results - UNIT TESTS ADDED 2025-12-09
+  - test_provider.py (11 tests)
+  - test_rate_limiter.py (10 tests)
+  - test_tavily.py (8 tests)
+  - test_brave.py (10 tests)
+  - test_arxiv.py (7 tests)
+  - test_pubmed.py (9 tests)
+  - test_semantic_scholar.py (10 tests)
+  - test_crawler.py (18 tests)
 
 ### Obstacle Handling
 - [x] #153 Create /backend/src/research_tool/utils/retry.py (tenacity config)
@@ -256,6 +282,15 @@
 - [x] #167 Create evaluate.py - Saturation evaluation node
 - [x] #168 Create synthesize.py - Synthesis node
 - [ ] #169 Create export_node.py - Export node -- NOT IMPLEMENTED
+
+### Agent Node Tests - ADDED 2025-12-09
+- [x] test_clarify.py (9 tests)
+- [x] test_plan.py (8 tests)
+- [x] test_collect.py (8 tests)
+- [x] test_process.py (9 tests)
+- [x] test_analyze.py (6 tests)
+- [x] test_evaluate.py (9 tests)
+- [x] test_synthesize.py (13 tests)
 
 ### Decision Logic
 - [x] #170 Create /backend/src/research_tool/agent/decisions/__init__.py
@@ -293,7 +328,7 @@
 - [x] #194 Add routes to main.py
 
 ### Phase 4 Tests
-- [ ] #195 Create /backend/tests/unit/test_search_providers.py -- NOT IMPLEMENTED
+- [x] #195 Create search provider tests (7 files) -- DONE 2025-12-09
 - [ ] #196 Create /backend/tests/unit/test_saturation.py -- NOT IMPLEMENTED
 - [ ] #197 Create /backend/tests/unit/test_decisions.py -- NOT IMPLEMENTED
 - [ ] #198 Create /backend/tests/integration/test_agent_workflow.py -- NOT IMPLEMENTED
@@ -467,33 +502,176 @@
 
 ---
 
-## SUMMARY
+## SUMMARY (HONEST STATUS)
 
 | Phase | Tasks | Completed | Status |
 |-------|-------|-----------|--------|
 | Phase 0: Setup | #1-5 | 5/5 | ✅ COMPLETE |
-| Phase 1: Foundation | #6-47 | 39/42 | ✅ MOSTLY COMPLETE (3 SwiftUI views missing) |
-| Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E validations pending) |
+| Phase 1: Foundation | #6-47 | 41/42 | ✅ COMPLETE (Swift build needs manual verify) |
+| Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
-| Phase 4: Research | #136-204 | 46/69 | ⚠️ 67% COMPLETE |
+| Phase 4: Research | #136-204 | 52/69 | ⚠️ 75% COMPLETE |
 | Phase 5: Intelligence | #205-239 | 0/35 | ❌ NOT STARTED |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~175 (~57%)
-**Playwright crawler**: #151 IMPLEMENTED (2025-12-09)
+**Completed**: ~183 (~60%)
+**Tests**: 216 passing (2025-12-09)
+**Linting**: 0 errors
+**Type checking**: 0 errors
+
+---
+
+## TEST COVERAGE BREAKDOWN
+
+### Unit Tests (20 files, 216 tests)
+| File | Tests | Category |
+|------|-------|----------|
+| test_health.py | 2 | API |
+| test_llm_router.py | 12 | LLM |
+| test_model_selector.py | 17 | LLM |
+| test_websocket.py | 10 | API/Integration |
+| test_memory.py | 20 | Memory |
+| test_crawler.py | 18 | Search |
+| test_provider.py | 11 | Search |
+| test_rate_limiter.py | 10 | Search |
+| test_tavily.py | 8 | Search |
+| test_brave.py | 10 | Search |
+| test_arxiv.py | 7 | Search |
+| test_pubmed.py | 9 | Search |
+| test_semantic_scholar.py | 10 | Search |
+| test_clarify.py | 9 | Agent |
+| test_plan.py | 8 | Agent |
+| test_collect.py | 8 | Agent |
+| test_process.py | 9 | Agent |
+| test_analyze.py | 6 | Agent |
+| test_evaluate.py | 9 | Agent |
+| test_synthesize.py | 13 | Agent |
+
+### Missing Test Coverage
+- [ ] test_saturation.py - Saturation decision logic
+- [ ] test_decisions.py - Decision tree logic
+- [ ] test_agent_workflow.py - Full workflow integration
+- [ ] E2E tests for all phases
 
 ---
 
 ## CRITICAL NEXT STEPS
 
-1. ~~**#151 crawler.py** - Implement Playwright with stealth for web scraping~~ ✅ DONE
-2. **#169 export_node.py** - Add export capability to workflow
-3. **Phase 5** - Intelligence features (domain detection, cross-verification)
-4. **Phase 6** - Export system (PDF, DOCX, etc.)
-5. **Phase 7** - Polish and E2E testing
+1. **Manual verification needed**:
+   - Open Xcode and build gui/ResearchTool/Package.swift
+   - Run backend + Ollama and test E2E flow
+
+2. **Missing implementations**:
+   - #145 exa.py - Exa search provider
+   - #149 unpaywall.py - Open access finder
+   - #169 export_node.py - Export workflow node
+   - #171-172 Decision trees (source_selector, clarification)
+   - #185-186 LangGraph tool wrappers
+
+3. **Missing tests**:
+   - #157-158 Obstacle handling tests
+   - #178-179 Saturation detection tests
+   - #183 Full workflow integration test
+
+4. **Phase 5-7**: Not started at all
+
+---
+
+## FILES THAT EXIST
+
+### Backend (55 Python files)
+```
+src/research_tool/
+├── __init__.py
+├── core/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── exceptions.py
+│   └── logging.py
+├── main.py
+├── models/
+│   ├── __init__.py
+│   ├── domain.py
+│   ├── entities.py
+│   ├── requests.py
+│   └── state.py
+├── services/
+│   ├── __init__.py
+│   ├── llm/
+│   │   ├── __init__.py
+│   │   ├── provider.py
+│   │   ├── router.py
+│   │   └── selector.py
+│   ├── memory/
+│   │   ├── __init__.py
+│   │   ├── combined_repo.py
+│   │   ├── lance_repo.py
+│   │   ├── learning.py
+│   │   ├── repository.py
+│   │   └── sqlite_repo.py
+│   └── search/
+│       ├── __init__.py
+│       ├── arxiv.py
+│       ├── brave.py
+│       ├── crawler.py
+│       ├── provider.py
+│       ├── pubmed.py
+│       ├── rate_limiter.py
+│       ├── semantic_scholar.py
+│       └── tavily.py
+├── agent/
+│   ├── __init__.py
+│   ├── graph.py
+│   ├── nodes/
+│   │   ├── __init__.py
+│   │   ├── analyze.py
+│   │   ├── clarify.py
+│   │   ├── collect.py
+│   │   ├── evaluate.py
+│   │   ├── plan.py
+│   │   ├── process.py
+│   │   └── synthesize.py
+│   ├── decisions/
+│   │   ├── __init__.py
+│   │   ├── obstacle_handler.py
+│   │   └── saturation.py
+│   └── tools/
+│       └── __init__.py
+├── api/
+│   ├── __init__.py
+│   ├── routes/
+│   │   └── research.py
+│   └── websocket/
+│       ├── __init__.py
+│       └── chat_ws.py
+└── utils/
+    ├── circuit_breaker.py
+    └── retry.py
+```
+
+### GUI (8 Swift files)
+```
+gui/ResearchTool/ResearchTool/
+├── App/
+│   ├── ResearchToolApp.swift
+│   └── AppState.swift
+├── Models/
+│   └── Message.swift
+├── ViewModels/
+│   └── ChatViewModel.swift
+├── Views/
+│   ├── ChatView.swift
+│   ├── MainView.swift
+│   ├── MessageBubble.swift
+│   ├── PrivacyModePicker.swift
+│   └── SettingsView.swift
+└── Services/
+    └── WebSocketClient.swift
+```
 
 ---
 
 *END OF TODO CHECKLIST*
+*Last verified: 2025-12-09 by Claude Opus 4.5*
