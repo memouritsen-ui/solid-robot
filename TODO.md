@@ -370,10 +370,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #220 Test: Contradictions detected in test data -- 18 tests passing 2025-12-09
 
 ### Confidence Scoring
-- [ ] #221 Implement source-based confidence
-- [ ] #222 Implement verification-based confidence
-- [ ] #223 Implement composite confidence score
-- [ ] #224 Test: Confidence correlates with source quality
+- [x] #221 Implement source-based confidence -- calculate_source_confidence() 2025-12-09
+- [x] #222 Implement verification-based confidence -- calculate_verification_confidence() 2025-12-09
+- [x] #223 Implement composite confidence score -- calculate_composite_confidence() 2025-12-09
+- [x] #224 Test: Confidence correlates with source quality -- 25 tests passing 2025-12-09
 
 ### Learning Updates
 - [ ] #225 Implement post-research learning trigger
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 16/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 20/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~216 (~70%)
-**Tests**: 364 passing (2025-12-09)
+**Completed**: ~220 (~72%)
+**Tests**: 389 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
