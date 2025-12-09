@@ -354,13 +354,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #208 Test: Detects medical, regulatory, CI domains -- 20 tests passing 2025-12-09
 
 ### Auto-Configuration
-- [ ] #209 Create /backend/data/domain_configs/medical.json
-- [ ] #210 Create /backend/data/domain_configs/competitive_intelligence.json
-- [ ] #211 Create /backend/data/domain_configs/regulatory.json
-- [ ] #212 Create /backend/data/domain_configs/academic.json
-- [ ] #213 Implement config loading
-- [ ] #214 Implement config merging with learned overrides
-- [ ] #215 Test: Correct config loaded for domain
+- [x] #209 Create /backend/data/domain_configs/medical.json -- IMPLEMENTED 2025-12-09
+- [x] #210 Create /backend/data/domain_configs/competitive_intelligence.json -- IMPLEMENTED 2025-12-09
+- [x] #211 Create /backend/data/domain_configs/regulatory.json -- IMPLEMENTED 2025-12-09
+- [x] #212 Create /backend/data/domain_configs/academic.json -- IMPLEMENTED 2025-12-09
+- [x] #213 Implement config loading -- ConfigLoader class 2025-12-09
+- [x] #214 Implement config merging with learned overrides -- merge_with_overrides() 2025-12-09
+- [x] #215 Test: Correct config loaded for domain -- 19 tests passing 2025-12-09
 
 ### Cross-Verification
 - [ ] #216 Create /backend/src/research_tool/agent/nodes/verify.py
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 4/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 11/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~204 (~66%)
-**Tests**: 327 passing (2025-12-09)
+**Completed**: ~211 (~69%)
+**Tests**: 346 passing (2025-12-09)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
