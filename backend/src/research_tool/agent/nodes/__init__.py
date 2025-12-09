@@ -8,6 +8,7 @@ from .export_node import export_node
 from .plan import plan_node
 from .process import process_node
 from .synthesize import synthesize_node
+from .verify import verify_node
 
 __all__ = [
     "clarify_node",
@@ -18,4 +19,5 @@ __all__ = [
     "evaluate_node",
     "synthesize_node",
     "export_node",
+    "verify_node",
 ]
