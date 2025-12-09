@@ -3,10 +3,11 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from research_tool.api.routes import research
+from research_tool.api.websocket import chat_websocket
 from research_tool.core import Settings, get_logger
 
 settings = Settings()
@@ -58,6 +59,16 @@ async def health_check() -> dict[str, str]:
         Dictionary with status and version.
     """
     return {"status": "healthy", "version": "0.1.0"}
+
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket) -> None:
+    """WebSocket endpoint for chat with streaming LLM responses.
+
+    Args:
+        websocket: WebSocket connection from client.
+    """
+    await chat_websocket(websocket)
 
 
 if __name__ == "__main__":
