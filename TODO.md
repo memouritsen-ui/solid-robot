@@ -331,8 +331,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ### Phase 4 Tests
 - [x] #195 Create search provider tests (7 files) -- DONE 2025-12-09
-- [ ] #196 Create /backend/tests/unit/test_saturation.py -- NOT IMPLEMENTED
-- [ ] #197 Create /backend/tests/unit/test_decisions.py -- NOT IMPLEMENTED
+- [x] #196 Create /backend/tests/unit/test_saturation.py -- IMPLEMENTED 2025-12-09 (as #178-179)
+- [x] #197 Create /backend/tests/unit/test_decisions.py -- IMPLEMENTED 2025-12-09
 - [ ] #198 Create /backend/tests/integration/test_agent_workflow.py -- NOT IMPLEMENTED
 - [ ] #199 Test: Full research cycle on test query -- NOT IMPLEMENTED
 
