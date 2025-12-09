@@ -326,7 +326,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #190 Implement GET /api/research/{id}/status
 - [x] #191 Implement POST /api/research/{id}/approve -- IMPLEMENTED 2025-12-09
 - [x] #192 Implement POST /api/research/{id}/stop
-- [ ] #193 Create progress WebSocket handler -- NOT IMPLEMENTED
+- [x] #193 Create progress WebSocket handler -- IMPLEMENTED 2025-12-09
 - [x] #194 Add routes to main.py
 
 ### Phase 4 Tests
