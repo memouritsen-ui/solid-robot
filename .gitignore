@@ -47,8 +47,10 @@ env/
 .env.local
 .env.*.local
 
-# Data directories
-data/
+# Data directories (runtime data, not configs)
+**/data/
+!**/data/domain_configs/
+!**/data/domain_configs/*.json
 *.db
 *.sqlite
 *.sqlite3
