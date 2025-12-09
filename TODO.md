@@ -312,13 +312,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #180 Wire all nodes in graph.py
 - [x] #181 Add conditional edges
 - [x] #182 Add checkpointing
-- [ ] #183 Test: Complete workflow executes -- NEEDS INTEGRATION TEST
+- [x] #183 Test: Complete workflow executes -- IMPLEMENTED 2025-12-09
 
 ### Agent Tools
 - [x] #184 Create /backend/src/research_tool/agent/tools/__init__.py
 - [x] #185 Create search_tool.py - LangGraph tool wrapper -- IMPLEMENTED 2025-12-09
 - [x] #186 Create memory_tool.py - Memory access tool -- IMPLEMENTED 2025-12-09
-- [ ] #187 Test: Tools integrate with agent -- NEEDS TEST
+- [x] #187 Test: Tools integrate with agent -- IMPLEMENTED 2025-12-09
 
 ### Research API
 - [x] #188 Create /backend/src/research_tool/api/routes/research.py
@@ -333,8 +333,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #195 Create search provider tests (7 files) -- DONE 2025-12-09
 - [x] #196 Create /backend/tests/unit/test_saturation.py -- IMPLEMENTED 2025-12-09 (as #178-179)
 - [x] #197 Create /backend/tests/unit/test_decisions.py -- IMPLEMENTED 2025-12-09
-- [ ] #198 Create /backend/tests/integration/test_agent_workflow.py -- NOT IMPLEMENTED
-- [ ] #199 Test: Full research cycle on test query -- NOT IMPLEMENTED
+- [x] #198 Create /backend/tests/integration/test_agent_workflow.py -- IMPLEMENTED 2025-12-09
+- [x] #199 Test: Full research cycle on test query -- IMPLEMENTED 2025-12-09
 
 ### Phase 4 Validation
 - [ ] #200 VALIDATE: Search anti-patterns #3, #4, #5 not present
