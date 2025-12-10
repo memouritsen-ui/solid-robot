@@ -400,19 +400,19 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ---
 
-## PHASE 6: EXPORT SYSTEM ❌ NOT STARTED
+## PHASE 6: EXPORT SYSTEM 🚧 IN PROGRESS
 
 ### Export Interface
-- [ ] #240 Create /backend/src/research_tool/services/export/__init__.py
-- [ ] #241 Create /backend/src/research_tool/services/export/exporter.py (ABC)
+- [x] #240 Create /backend/src/research_tool/services/export/__init__.py -- 2025-12-10
+- [x] #241 Create /backend/src/research_tool/services/export/exporter.py (ABC) -- 2025-12-10
 
 ### Export Implementations
-- [ ] #242 Create markdown.py - Markdown export
-- [ ] #243 Create json_export.py - JSON export
-- [ ] #244 Create pdf.py - PDF export (WeasyPrint)
-- [ ] #245 Create docx.py - Word export
-- [ ] #246 Create pptx.py - PowerPoint export
-- [ ] #247 Create xlsx.py - Excel export
+- [x] #242 Create markdown.py - Markdown export -- 2025-12-10
+- [x] #243 Create json_export.py - JSON export -- 2025-12-10
+- [x] #244 Create pdf.py - PDF export (WeasyPrint) -- 2025-12-10
+- [x] #245 Create docx.py - Word export -- 2025-12-10
+- [x] #246 Create pptx.py - PowerPoint export -- 2025-12-10
+- [x] #247 Create xlsx.py - Excel export -- 2025-12-10
 
 ### Templates
 - [ ] #248 Create /backend/templates/report.md.j2
@@ -433,13 +433,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [ ] #259 Implement file download/save
 
 ### Phase 6 Tests
-- [ ] #260 Test: Markdown export valid
-- [ ] #261 Test: JSON export valid
+- [x] #260 Test: Markdown export valid -- 2025-12-10 (11 tests)
+- [x] #261 Test: JSON export valid -- 2025-12-10 (10 tests)
 - [ ] #262 Test: PDF export opens correctly
 - [ ] #263 Test: DOCX export opens correctly
 - [ ] #264 Test: PPTX export opens correctly
 - [ ] #265 Test: XLSX export opens correctly
-- [ ] #266 Test: Large export (1000 sources) doesn't crash
+- [x] #266 Test: Large export (1000 sources) doesn't crash -- 2025-12-10 (2 tests)
 
 ### Phase 6 Validation
 - [ ] #267 VALIDATE: Output anti-patterns #11, #12 not present
