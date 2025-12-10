@@ -387,7 +387,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #231 Test: Recommendations accurate for test cases -- IMPLEMENTED 2025-12-10 (47 tests in test_recommendation_accuracy.py)
 
 ### Phase 5 Tests
-- [ ] #232 Test: Domain detection accuracy >90%
+- [x] #232 Test: Domain detection accuracy >90% -- IMPLEMENTED 2025-12-10 (7 tests, 100-query corpus)
 - [ ] #233 Test: Cross-verification catches planted contradictions
 - [ ] #234 Test: Confidence scores correlate with accuracy
 - [ ] #235 Test: Learning influences future research
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 27/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 28/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~224 (~73%)
-**Tests**: 473 passing (2025-12-10)
+**Completed**: ~225 (~73%)
+**Tests**: 480 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
