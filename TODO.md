@@ -384,7 +384,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 ### Privacy Recommendation Enhancement
 - [x] #229 Enhance recommend_privacy_mode() with NLP -- IMPLEMENTED 2025-12-10 (SemanticPrivacyDetector + 10 tests)
 - [x] #230 Add explanation generation -- ALREADY IMPLEMENTED (reasoning in ModelRecommendation + privacy mode explanations)
-- [ ] #231 Test: Recommendations accurate for test cases
+- [x] #231 Test: Recommendations accurate for test cases -- IMPLEMENTED 2025-12-10 (47 tests in test_recommendation_accuracy.py)
 
 ### Phase 5 Tests
 - [ ] #232 Test: Domain detection accuracy >90%
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 26/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 27/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~223 (~73%)
-**Tests**: 426 passing (2025-12-10)
+**Completed**: ~224 (~73%)
+**Tests**: 473 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
