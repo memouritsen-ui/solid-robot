@@ -94,12 +94,13 @@ class PlaywrightCrawler(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Playwright crawler."""
         return "playwright_crawler"
 
     @property
     def requests_per_second(self) -> float:
-        # Conservative rate limit to avoid being blocked
-        return 0.5  # 1 request per 2 seconds
+        """Rate limit: 0.5 RPS (1 request per 2 seconds to avoid blocks)."""
+        return 0.5
 
     def _get_user_agent(self) -> str:
         """Rotate through user agents."""

@@ -18,11 +18,13 @@ class ExaProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Exa AI."""
         return "exa"
 
     @property
     def requests_per_second(self) -> float:
-        return 1.0  # Conservative limit for Exa
+        """Rate limit: 1 RPS (conservative for Exa API)."""
+        return 1.0
 
     def __init__(self) -> None:
         """Initialize Exa client."""

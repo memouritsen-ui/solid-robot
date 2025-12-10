@@ -18,11 +18,13 @@ class TavilyProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Tavily."""
         return "tavily"
 
     @property
     def requests_per_second(self) -> float:
-        return 5.0  # Generous limit for Tavily
+        """Rate limit: 5 RPS for Tavily API."""
+        return 5.0
 
     def __init__(self) -> None:
         """Initialize Tavily client."""

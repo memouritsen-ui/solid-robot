@@ -21,11 +21,13 @@ class UnpaywallProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Unpaywall."""
         return "unpaywall"
 
     @property
     def requests_per_second(self) -> float:
-        return 10.0  # 100k/day = ~1.15/s, using 10 for bursts
+        """Rate limit: 10 RPS (100k/day allows bursts)."""
+        return 10.0
 
     def __init__(self) -> None:
         """Initialize Unpaywall provider."""

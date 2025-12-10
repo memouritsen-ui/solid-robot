@@ -18,11 +18,13 @@ class ArxivProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for arXiv."""
         return "arxiv"
 
     @property
     def requests_per_second(self) -> float:
-        return 1.0  # Conservative rate limit for arXiv API
+        """Rate limit: 1 RPS (conservative for arXiv API)."""
+        return 1.0
 
     def __init__(self) -> None:
         """Initialize arXiv client."""

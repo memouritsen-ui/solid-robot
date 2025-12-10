@@ -194,6 +194,7 @@ def create_timing_callback() -> Callable[[str, str, float], None]:
     """
 
     def callback(path: str, method: str, duration: float) -> None:
+        """Record request timing to global profiler."""
         timing = RequestTiming(
             path=path,
             method=method,

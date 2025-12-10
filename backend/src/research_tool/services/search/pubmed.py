@@ -20,11 +20,13 @@ class PubMedProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for PubMed."""
         return "pubmed"
 
     @property
     def requests_per_second(self) -> float:
-        return 3.0  # NCBI E-utilities rate limit (no API key)
+        """Rate limit: 3 RPS for NCBI E-utilities without API key."""
+        return 3.0
 
     async def search(
         self,

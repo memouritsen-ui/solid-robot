@@ -22,11 +22,13 @@ class BraveProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Brave Search."""
         return "brave"
 
     @property
     def requests_per_second(self) -> float:
-        return 1.0  # Conservative rate limit
+        """Rate limit: 1 RPS (conservative for Brave API)."""
+        return 1.0
 
     async def search(
         self,

@@ -76,6 +76,7 @@ class PDFExporter(Exporter):
         """
         # Escape HTML entities
         def escape(text: str) -> str:
+            """Escape HTML special characters to prevent XSS."""
             return (
                 text.replace("&", "&amp;")
                 .replace("<", "&lt;")

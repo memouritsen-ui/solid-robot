@@ -23,11 +23,13 @@ class SemanticScholarProvider(SearchProvider):
 
     @property
     def name(self) -> str:
+        """Provider identifier for Semantic Scholar."""
         return "semantic_scholar"
 
     @property
     def requests_per_second(self) -> float:
-        return 1.0  # CRITICAL: Do not exceed 1 RPS!
+        """Rate limit: 1 RPS (CRITICAL - do not exceed)."""
+        return 1.0
 
     async def search(
         self,
