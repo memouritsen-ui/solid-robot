@@ -382,7 +382,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #228 Test: Learning persists to next research -- IMPLEMENTED 2025-12-10 (4 integration tests in test_learning_persistence.py)
 
 ### Privacy Recommendation Enhancement
-- [ ] #229 Enhance recommend_privacy_mode() with NLP
+- [x] #229 Enhance recommend_privacy_mode() with NLP -- IMPLEMENTED 2025-12-10 (SemanticPrivacyDetector + 10 tests)
 - [ ] #230 Add explanation generation
 - [ ] #231 Test: Recommendations accurate for test cases
 
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 24/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 25/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~221 (~72%)
-**Tests**: 416 passing (2025-12-10)
+**Completed**: ~222 (~72%)
+**Tests**: 426 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
