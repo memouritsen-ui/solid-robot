@@ -12,20 +12,56 @@ class BackendLauncher: ObservableObject {
     private var backendProcess: Process?
     private var outputPipe: Pipe?
 
-    /// Path to the backend directory
+    /// Path to the backend directory with robust resolution
     private var backendPath: String {
-        // First check if running from app bundle
+        // Priority 1: Environment variable
+        if let envPath = ProcessInfo.processInfo.environment["RESEARCH_TOOL_BACKEND_PATH"] {
+            if FileManager.default.fileExists(atPath: envPath) {
+                print("[BackendLauncher] Using env path: \(envPath)")
+                return envPath
+            }
+            print("[BackendLauncher] WARNING: Env path not found: \(envPath)")
+        }
+
+        // Priority 2: App bundle (for distributed app)
         if let bundlePath = Bundle.main.resourcePath {
             let bundleBackendPath = (bundlePath as NSString)
                 .deletingLastPathComponent
                 .appending("/backend")
             if FileManager.default.fileExists(atPath: bundleBackendPath) {
+                print("[BackendLauncher] Using bundle path: \(bundleBackendPath)")
                 return bundleBackendPath
             }
         }
 
-        // Fallback to development path
-        return "/Users/madsbruusgaard-mouritsen/solid-robot/backend"
+        // Priority 3: UserDefaults custom path
+        if let customPath = UserDefaults.standard.string(forKey: "backendPath") {
+            if FileManager.default.fileExists(atPath: customPath) {
+                print("[BackendLauncher] Using custom path: \(customPath)")
+                return customPath
+            }
+            print("[BackendLauncher] WARNING: Custom path not found: \(customPath)")
+        }
+
+        // Priority 4: Known development paths (TRY BOTH CASINGS)
+        let devPaths = [
+            "/Users/madsbruusgaard-mouritsen/SOLID-ROBOT/backend",  // Uppercase (CORRECT)
+            "/Users/madsbruusgaard-mouritsen/solid-robot/backend",  // Lowercase (fallback)
+            NSHomeDirectory() + "/SOLID-ROBOT/backend",
+            NSHomeDirectory() + "/solid-robot/backend"
+        ]
+
+        for path in devPaths {
+            if FileManager.default.fileExists(atPath: path) {
+                print("[BackendLauncher] Using dev path: \(path)")
+                return path
+            }
+        }
+
+        // Nothing found - return first dev path and let it fail with clear error
+        let fallback = devPaths[0]
+        print("[BackendLauncher] ERROR: No valid backend path found. Tried: \(devPaths)")
+        return fallback
     }
 
     private init() {}
@@ -71,7 +107,8 @@ class BackendLauncher: ObservableObject {
             }
         }
 
-        statusMessage = "Backend kunne ikke startes"
+        statusMessage = "Backend kunne ikke startes. Tjek at backend findes i: \(backendPath)"
+        print("[BackendLauncher] FATAL: Backend startup failed after 30s. Path: \(backendPath)")
     }
 
     /// Start the backend process

@@ -31,13 +31,13 @@ class SemanticScholarProvider(SearchProvider):
         """Rate limit: 1 RPS (CRITICAL - do not exceed)."""
         return 1.0
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search Semantic Scholar with strict rate limiting.
+        """Internal Semantic Scholar search implementation.
 
         Args:
             query: Search query

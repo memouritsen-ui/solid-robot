@@ -32,13 +32,13 @@ class ExaProvider(SearchProvider):
             raise ValueError("EXA_API_KEY not configured")
         self.client = Exa(api_key=settings.exa_api_key)
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Execute Exa search with neural mode and text content.
+        """Internal Exa search implementation.
 
         Args:
             query: Search query

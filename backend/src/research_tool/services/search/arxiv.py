@@ -30,13 +30,13 @@ class ArxivProvider(SearchProvider):
         """Initialize arXiv client."""
         self.client = arxiv.Client()
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search arXiv for academic preprints.
+        """Internal arXiv search implementation.
 
         Args:
             query: Search query
