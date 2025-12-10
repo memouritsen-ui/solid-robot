@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Research Report: {{ query | e }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4A90D9;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4A90D9;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #555;
+        }
+        .metadata {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .metadata p {
+            margin: 5px 0;
+        }
+        .fact {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fafafa;
+            border-left: 4px solid #4A90D9;
+        }
+        blockquote {
+            margin: 10px 0;
+            font-style: italic;
+            color: #444;
+        }
+        .limitations {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .url {
+            color: #666;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+        .type {
+            color: #888;
+            font-size: 0.85em;
+        }
+        .source-item {
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        ol {
+            padding-left: 20px;
+        }
+        ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Research Report: {{ query | e }}</h1>
+
+    <div class="metadata">
+        <p><strong>Domain:</strong> {{ domain | e }}</p>
+        <p><strong>Confidence Score:</strong> {{ "%.1f" | format(confidence_score * 100) }}%</p>
+        <p><strong>Generated:</strong> {{ generated_at }}</p>
+    </div>
+
+    <h2>Executive Summary</h2>
+    <p>{{ summary | e }}</p>
+
+    {% if facts %}
+    <h2>Key Findings</h2>
+    {% for fact in facts %}
+    <div class="fact">
+        <h3>Finding {{ loop.index }}</h3>
+        <blockquote>{{ (fact.statement | default(fact.content, true)) | e }}</blockquote>
+        <p>
+            <strong>Confidence:</strong> {{ "%.1f" | format((fact.confidence | default(0.0)) * 100) }}% |
+            <strong>Source:</strong> {{ (fact.source | default("Unknown")) | e }}
+        </p>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if sources %}
+    <h2>Sources</h2>
+    <ol>
+        {% for source in sources %}
+        <li class="source-item">
+            <strong>{{ (source.title | default("Untitled")) | e }}</strong><br>
+            {% if source.url %}
+            <span class="url">{{ source.url | e }}</span><br>
+            {% endif %}
+            <span class="type">Type: {{ (source.type | default("web")) | e }}</span>
+        </li>
+        {% endfor %}
+    </ol>
+    {% endif %}
+
+    {% if limitations %}
+    <h2>Limitations</h2>
+    <div class="limitations">
+        <p>This research has the following limitations:</p>
+        <ul>
+            {% for limitation in limitations %}
+            <li>{{ limitation | e }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>This report was generated automatically. Please verify critical information from primary sources.</p>
+    </div>
+</body>
+</html>

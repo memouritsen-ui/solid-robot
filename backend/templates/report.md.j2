@@ -1,0 +1,50 @@
+# Research Report: {{ query }}
+
+## Metadata
+
+- **Domain**: {{ domain }}
+- **Confidence Score**: {{ "%.1f" | format(confidence_score * 100) }}%
+- **Generated**: {{ generated_at }}
+
+## Executive Summary
+
+{{ summary }}
+
+{% if facts %}
+## Key Findings
+
+{% for fact in facts %}
+### Finding {{ loop.index }}
+
+> {{ fact.statement | default(fact.content, true) }}
+
+- **Confidence**: {{ "%.1f" | format((fact.confidence | default(0.0)) * 100) }}%
+- **Source**: {{ fact.source | default("Unknown") }}
+
+{% endfor %}
+{% endif %}
+{% if sources %}
+## Sources
+
+{% for source in sources %}
+{{ loop.index }}. **{{ source.title | default("Untitled") }}**
+{% if source.url %}
+   - URL: [{{ source.url }}]({{ source.url }})
+{% endif %}
+   - Type: {{ source.type | default("web") }}
+
+{% endfor %}
+{% endif %}
+{% if limitations %}
+## Limitations
+
+This research has the following limitations that should be considered when interpreting the results:
+
+{% for limitation in limitations %}
+- {{ limitation }}
+{% endfor %}
+{% endif %}
+
+---
+
+*This report was generated automatically. Please verify critical information from primary sources.*
