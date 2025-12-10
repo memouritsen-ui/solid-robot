@@ -400,7 +400,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ---
 
-## PHASE 6: EXPORT SYSTEM 🚧 IN PROGRESS
+## PHASE 6: EXPORT SYSTEM ✅ COMPLETE
 
 ### Export Interface
 - [x] #240 Create /backend/src/research_tool/services/export/__init__.py -- 2025-12-10
@@ -427,10 +427,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #255 Add routes to main.py -- 2025-12-10
 
 ### SwiftUI Export View
-- [ ] #256 Create ExportView.swift
-- [ ] #257 Implement format selection
-- [ ] #258 Implement export trigger
-- [ ] #259 Implement file download/save
+- [x] #256 Create ExportView.swift -- 2025-12-10
+- [x] #257 Implement format selection -- 2025-12-10
+- [x] #258 Implement export trigger -- 2025-12-10
+- [x] #259 Implement file download/save -- 2025-12-10
 
 ### Phase 6 Tests
 - [x] #260 Test: Markdown export valid -- 2025-12-10 (11 tests)
@@ -444,8 +444,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 ### Phase 6 Validation
 - [x] #267 VALIDATE: Output anti-patterns #11, #12 not present -- 2025-12-10 (9 tests)
 - [x] #268 VALIDATE: Reports include limitations -- 2025-12-10 (verified in test_export.py)
-- [ ] #269 COMMIT: "feat: complete phase 6 export"
-- [ ] #270 MERGE: phase-6-export → develop
+- [x] #269 COMMIT: "feat: complete phase 6 export" -- 2025-12-10
+- [x] #270 MERGE: phase-6-export → develop -- 2025-12-10 (already on develop)
 
 ---
 
@@ -514,11 +514,11 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
 | Phase 5: Intelligence | #205-239 | 35/35 | ✅ COMPLETE |
-| Phase 6: Export | #240-270 | 19/31 | 🚧 IN PROGRESS (SwiftUI pending) |
+| Phase 6: Export | #240-270 | 31/31 | ✅ COMPLETE |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~271 (~88%)
+**Completed**: ~283 (~92%)
 **Tests**: 617 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
