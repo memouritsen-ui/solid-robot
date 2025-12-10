@@ -80,7 +80,7 @@ class BackendLauncher: ObservableObject {
 
         // Use zsh to ensure PATH is set correctly
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-l", "-c", "cd \(backendPath) && uv run uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8000"]
+        process.arguments = ["-l", "-c", "cd \(backendPath) && uv run python -m uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8000"]
 
         // Set up output pipe for logging
         let pipe = Pipe()

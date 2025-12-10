@@ -13,11 +13,12 @@ logger = get_logger(__name__)
 
 
 # Model configuration - maps logical names to LiteLLM model specs
+# Updated to match actually installed Ollama models
 MODEL_CONFIG: list[dict[str, Any]] = [
     {
         "model_name": "local-fast",
         "litellm_params": {
-            "model": "ollama/llama3.1:8b-instruct-q8_0",
+            "model": "ollama/llama3.1:8b",  # Your installed model
             "api_base": settings.ollama_base_url,
         },
         "model_info": {
@@ -28,7 +29,7 @@ MODEL_CONFIG: list[dict[str, Any]] = [
     {
         "model_name": "local-powerful",
         "litellm_params": {
-            "model": "ollama/qwen2.5:32b-instruct-q5_K_M",
+            "model": "ollama/qwen2.5-coder:32b",  # Your installed model
             "api_base": settings.ollama_base_url,
         },
         "model_info": {
