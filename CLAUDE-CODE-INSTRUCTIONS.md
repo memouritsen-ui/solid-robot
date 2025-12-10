@@ -1,7 +1,19 @@
 # CLAUDE CODE INSTRUCTIONS
+
+> ## ⚠️ ADVARSEL: DETTE DOKUMENT ER FORÆLDET
+>
+> **Brug i stedet:** `CLAUDE.md` og `docs/plans/2025-12-10-professional-research-scraper.md`
+>
+> Reglerne nedenfor var til original build. Projektet har nu placeholders
+> der kræver specifik fix-plan. Se CLAUDE.md for aktuel autoritativ guide.
+>
+> **Opdateret:** 2025-12-10
+
+---
+
 ## Autonomous Operation Rules for Research Tool Build
 
-**CRITICAL**: Read this document completely before executing ANY task.
+**CRITICAL**: Read CLAUDE.md first - it supersedes this document.
 
 ---
 

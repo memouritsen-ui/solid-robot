@@ -1,9 +1,21 @@
 # RESEARCH TOOL — BUILD PLAN
+
+> ## ⚠️ ADVARSEL: DETTE DOKUMENT ER FORÆLDET
+>
+> **Brug i stedet:** `docs/plans/2025-12-10-professional-research-scraper.md`
+>
+> Dette dokument var del af original build-plan men projektet har placeholders
+> der skal fixes. Se CLAUDE.md for aktuel status.
+>
+> **Opdateret:** 2025-12-10
+
+---
+
 ## Step-by-Step Execution Instructions for Claude Code
 
 **Authority**: This plan implements SPEC.md which operationalizes META-BUILD-GUIDE-v2.md
 **Execution Mode**: Full autonomous
-**Workspace**: /Users/madsbruusgaard-mouritsen/solid-robot
+**Workspace**: /Users/madsbruusgaard-mouritsen/SOLID-ROBOT
 **Repository**: https://github.com/memouritsen-ui/solid-robot.git
 
 ---
