@@ -221,8 +221,12 @@ class ModelSelector:
     ) -> tuple[PrivacyMode, str]:
         """Recommend privacy mode based on query content analysis.
 
-        Analyzes query for sensitive keywords and patterns to recommend
-        appropriate privacy mode. Errs on the side of privacy.
+        Uses a two-stage detection:
+        1. Keyword matching (fast, explicit terms)
+        2. Semantic similarity (NLP-based, catches implicit sensitivity)
+
+        Errs on the side of privacy - if either method detects sensitivity,
+        recommends LOCAL_ONLY.
 
         Args:
             query: User's query text
@@ -237,6 +241,7 @@ class ModelSelector:
                 "Data explicitly marked as sensitive. Recommending local-only processing.",
             )
 
+        # Stage 1: Keyword matching (fast)
         query_lower = query.lower()
         found_sensitive = [kw for kw in self.SENSITIVE_KEYWORDS if kw in query_lower]
 
@@ -249,6 +254,28 @@ class ModelSelector:
                 f"Detected potentially sensitive content ({keywords_str}). "
                 "Recommending local-only processing for privacy.",
             )
+
+        # Stage 2: Semantic similarity detection (NLP-based)
+        try:
+            from research_tool.services.llm.semantic_privacy import (
+                get_semantic_privacy_detector,
+            )
+
+            detector = get_semantic_privacy_detector()
+            is_sensitive, category, confidence = detector.detect_sensitivity_with_confidence(
+                query
+            )
+
+            if is_sensitive and category:
+                return (
+                    PrivacyMode.LOCAL_ONLY,
+                    f"Semantic analysis detected {category}-related content "
+                    f"(confidence: {confidence:.0%}). "
+                    "Recommending local-only processing for privacy.",
+                )
+        except ImportError:
+            # Semantic detection not available, fall through to default
+            logger.warning("Semantic privacy detection unavailable, using keyword-only")
 
         return (
             PrivacyMode.CLOUD_ALLOWED,
