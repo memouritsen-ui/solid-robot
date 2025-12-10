@@ -378,7 +378,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 ### Learning Updates
 - [x] #225 Implement post-research learning trigger -- IMPLEMENTED 2025-12-10 (PostResearchLearner class + 11 tests)
 - [x] #226 Update source effectiveness after research -- IMPLEMENTED 2025-12-10 (export_node integration + 9 tests)
-- [ ] #227 Update domain config based on discovered sources
+- [x] #227 Update domain config based on discovered sources -- IMPLEMENTED 2025-12-10 (export_node + 3 tests)
 - [ ] #228 Test: Learning persists to next research
 
 ### Privacy Recommendation Enhancement
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 22/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 23/35 | 🚧 IN PROGRESS |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
 **Completed**: ~220 (~72%)
-**Tests**: 409 passing (2025-12-10)
+**Tests**: 412 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
