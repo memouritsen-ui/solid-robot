@@ -45,6 +45,32 @@ This research has the following limitations that should be considered when inter
 {% endfor %}
 {% endif %}
 
+{% if not_found %}
+## What Was Not Found
+
+The following information was sought but could not be located:
+
+{% for item in not_found %}
+- {{ item }}
+{% endfor %}
+{% endif %}
+
+{% if access_failures %}
+## Access Failures
+
+The following sources could not be accessed during research:
+
+{% for failure in access_failures %}
+- **{{ failure.source | default("Unknown source") }}**: {{ failure.reason | default("Unknown reason") }}
+{% endfor %}
+{% endif %}
+
+{% if stopping_reason %}
+## Research Completion
+
+**Why research stopped**: {{ stopping_reason }}
+{% endif %}
+
 ---
 
 *This report was generated automatically. Please verify critical information from primary sources.*

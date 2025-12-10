@@ -91,6 +91,10 @@ class TemplateLoader:
             "limitations": data.limitations,
             "metadata": data.metadata,
             "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            # Anti-pattern prevention fields
+            "not_found": data.not_found,
+            "stopping_reason": data.stopping_reason,
+            "access_failures": data.access_failures,
         }
 
         if extra_context:

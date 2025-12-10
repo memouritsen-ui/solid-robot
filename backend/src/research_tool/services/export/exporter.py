@@ -61,6 +61,9 @@ class ResearchExportData:
         confidence_score: Overall confidence score
         limitations: Known limitations
         metadata: Additional metadata
+        not_found: What was NOT found (anti-pattern #11 prevention)
+        stopping_reason: Why research stopped (anti-pattern #12 prevention)
+        access_failures: Sources that failed with reasons
     """
 
     query: str
@@ -71,6 +74,17 @@ class ResearchExportData:
     confidence_score: float
     limitations: list[str]
     metadata: dict[str, Any]
+    # Anti-pattern prevention fields (META guide Section 5.6)
+    not_found: list[str] = None  # type: ignore[assignment]
+    stopping_reason: str | None = None
+    access_failures: list[dict[str, Any]] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        """Initialize default values for optional fields."""
+        if self.not_found is None:
+            self.not_found = []
+        if self.access_failures is None:
+            self.access_failures = []
 
 
 class Exporter(ABC):
