@@ -30,13 +30,13 @@ class BraveProvider(SearchProvider):
         """Rate limit: 1 RPS (conservative for Brave API)."""
         return 1.0
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search using Brave Search API.
+        """Internal Brave Search implementation.
 
         Args:
             query: Search query

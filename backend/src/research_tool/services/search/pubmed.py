@@ -28,13 +28,13 @@ class PubMedProvider(SearchProvider):
         """Rate limit: 3 RPS for NCBI E-utilities without API key."""
         return 3.0
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search PubMed using E-utilities API.
+        """Internal PubMed search implementation.
 
         Args:
             query: Search query

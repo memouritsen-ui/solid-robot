@@ -290,13 +290,13 @@ class PlaywrightCrawler(SearchProvider):
 
         return {k: v for k, v in metadata.items() if v}
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search by crawling provided URLs.
+        """Internal crawler search implementation.
 
         Note: This provider doesn't do traditional search. Instead, pass URLs
         in filters['urls'] to crawl them. The query is used for relevance filtering.

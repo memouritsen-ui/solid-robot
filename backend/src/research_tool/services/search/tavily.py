@@ -32,13 +32,13 @@ class TavilyProvider(SearchProvider):
             raise ValueError("TAVILY_API_KEY not configured")
         self.client = TavilyClient(api_key=settings.tavily_api_key)
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Execute Tavily search with advanced mode.
+        """Internal Tavily search implementation.
 
         Args:
             query: Search query

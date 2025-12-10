@@ -75,13 +75,13 @@ class UnpaywallProvider(SearchProvider):
                 "retrieved_at": datetime.now(),
             }
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Search for open access versions of papers by DOI.
+        """Internal Unpaywall search implementation.
 
         Note: Unpaywall doesn't support text search. Use filters["dois"] to
         look up specific DOIs.
