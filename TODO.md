@@ -414,8 +414,11 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #246 Create pptx.py - PowerPoint export -- 2025-12-10
 - [x] #247 Create xlsx.py - Excel export -- 2025-12-10
 
-### Templates (inline in exporters)
-- [x] #248-251 Templates embedded in exporters (inline HTML/formatting) -- 2025-12-10
+### Templates
+- [x] #248 Create /backend/templates/report.md.j2 -- 2025-12-10
+- [x] #249 Create /backend/templates/report.html.j2 -- 2025-12-10
+- [x] #250 Implement template selection logic (TemplateLoader) -- 2025-12-10
+- [x] #251 Test: Templates render correctly (21 tests) -- 2025-12-10
 
 ### Export API
 - [x] #252 Create /backend/src/research_tool/api/routes/export.py -- 2025-12-10
@@ -515,8 +518,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~261 (~85%)
-**Tests**: 549 passing (2025-12-10)
+**Completed**: ~265 (~86%)
+**Tests**: 570 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
@@ -524,9 +527,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ## TEST COVERAGE BREAKDOWN
 
-### Unit Tests (22 files, 239 tests)
+### Unit Tests (23 files, 260 tests)
 | File | Tests | Category |
 |------|-------|----------|
+| test_template_loader.py | 21 | Export |
 | test_health.py | 2 | API |
 | test_llm_router.py | 12 | LLM |
 | test_model_selector.py | 17 | LLM |
