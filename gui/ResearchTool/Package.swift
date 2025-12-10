@@ -16,12 +16,17 @@ let package = Package(
             exclude: ["Resources"],
             sources: [
                 "App/ResearchToolApp.swift",
+                "App/AppState.swift",
                 "Models/Message.swift",
                 "Services/WebSocketClient.swift",
+                "Services/BackendLauncher.swift",
                 "ViewModels/ChatViewModel.swift",
                 "Views/ChatView.swift",
+                "Views/MainView.swift",
                 "Views/MessageBubble.swift",
-                "Views/PrivacyModePicker.swift"
+                "Views/PrivacyModePicker.swift",
+                "Views/SettingsView.swift",
+                "Views/ExportView.swift"
             ]
         )
     ]

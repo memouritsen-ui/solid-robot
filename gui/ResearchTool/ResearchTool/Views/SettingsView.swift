@@ -106,28 +106,4 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - PrivacyMode Extension
-
-extension PrivacyMode: CaseIterable {
-    public static var allCases: [PrivacyMode] {
-        [.localOnly, .cloudAllowed]
-    }
-
-    var displayName: String {
-        switch self {
-        case .localOnly:
-            return "Local Only"
-        case .cloudAllowed:
-            return "Cloud Allowed"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .localOnly:
-            return "lock.shield"
-        case .cloudAllowed:
-            return "cloud"
-        }
-    }
-}
+// PrivacyMode is already defined in Models/Message.swift with CaseIterable, displayName, icon
