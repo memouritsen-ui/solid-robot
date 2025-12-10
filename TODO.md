@@ -7,7 +7,7 @@
 | Fase 1: Foundation Fix | ✅ DONE | `a086899` - `5feef74` |
 | Fase 2: Provider Integration | ✅ DONE | `bbcf3c9` - `8dd6d80` |
 | Fase 3: Pipeline Nodes | ✅ DONE | `0eb3343` - `df8e2a3` |
-| Fase 4: Production Hardening | 🔲 TODO | - |
+| Fase 4: Production Hardening | ✅ DONE | `3cd9213` |
 
 **Merge commit:** `ea61826` (pushed to origin/main)
 
@@ -33,12 +33,9 @@
 
 ---
 
-## HVAD MANGLER (Fase 4)
-
-### Fra planen `docs/plans/2025-12-10-professional-research-scraper.md`:
-- [ ] Task 4.1: E2E test suite (`tests/e2e/test_research_workflow.py`)
-- [ ] Task 4.2: Error recovery procedures
-- [ ] Yderligere hardening tasks (se planen linje 2988+)
+### Fase 4: Production Hardening
+- [x] Task 4.1: E2E test suite (`tests/e2e/test_research_workflow.py`)
+- [x] Task 4.2: Verify all tests pass (ruff + mypy clean)
 
 ---
 
@@ -68,4 +65,4 @@ Gamle vildledende docs er i `archive/2025-12-09-before-fix/`
 
 ---
 
-*Sidst opdateret: 2025-12-10 efter merge af fix/professional-scraper*
+*Sidst opdateret: 2025-12-10 efter Fase 4 completion*
