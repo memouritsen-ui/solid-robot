@@ -345,7 +345,7 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ---
 
-## PHASE 5: INTELLIGENCE FEATURES 🚧 IN PROGRESS
+## PHASE 5: INTELLIGENCE FEATURES ✅ COMPLETE
 
 ### Domain Detection
 - [x] #205 Create /backend/src/research_tool/agent/decisions/domain_detector.py -- IMPLEMENTED 2025-12-09
@@ -390,13 +390,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #232 Test: Domain detection accuracy >90% -- IMPLEMENTED 2025-12-10 (7 tests, 100-query corpus)
 - [x] #233 Test: Cross-verification catches planted contradictions -- IMPLEMENTED 2025-12-10 (13 tests)
 - [x] #234 Test: Confidence scores correlate with accuracy -- IMPLEMENTED 2025-12-10 (14 tests)
-- [ ] #235 Test: Learning influences future research
+- [x] #235 Test: Learning influences future research -- IMPLEMENTED 2025-12-10 (5 tests in test_learning_influences_research.py)
 
 ### Phase 5 Validation
-- [ ] #236 VALIDATE: Auto-configuration works for test queries
-- [ ] #237 VALIDATE: Recommendations match expected
-- [ ] #238 COMMIT: "feat: complete phase 5 intelligence"
-- [ ] #239 MERGE: phase-5-intelligence → develop
+- [x] #236 VALIDATE: Auto-configuration works for test queries -- IMPLEMENTED 2025-12-10 (10 tests in test_auto_configuration.py)
+- [x] #237 VALIDATE: Recommendations match expected -- VERIFIED 2025-12-10 (47 tests passing)
+- [x] #238 COMMIT: "feat: complete phase 5 intelligence" -- 2025-12-10
+- [x] #239 MERGE: phase-5-intelligence → develop -- 2025-12-10
 
 ---
 
@@ -513,13 +513,13 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 2: Conversational | #48-94 | 44/47 | ✅ COMPLETE (3 E2E need manual test) |
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
-| Phase 5: Intelligence | #205-239 | 30/35 | 🚧 IN PROGRESS |
+| Phase 5: Intelligence | #205-239 | 35/35 | ✅ COMPLETE |
 | Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~227 (~74%)
-**Tests**: 507 passing (2025-12-10)
+**Completed**: ~242 (~79%)
+**Tests**: 522 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
