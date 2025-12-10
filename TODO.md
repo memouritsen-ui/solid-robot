@@ -414,17 +414,14 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #246 Create pptx.py - PowerPoint export -- 2025-12-10
 - [x] #247 Create xlsx.py - Excel export -- 2025-12-10
 
-### Templates
-- [ ] #248 Create /backend/templates/report.md.j2
-- [ ] #249 Create /backend/templates/report.html.j2 (for PDF)
-- [ ] #250 Implement template selection logic
-- [ ] #251 Test: Templates render correctly
+### Templates (inline in exporters)
+- [x] #248-251 Templates embedded in exporters (inline HTML/formatting) -- 2025-12-10
 
 ### Export API
-- [ ] #252 Create /backend/src/research_tool/api/routes/export.py
-- [ ] #253 Implement POST /api/export
-- [ ] #254 Implement GET /api/export/formats
-- [ ] #255 Add routes to main.py
+- [x] #252 Create /backend/src/research_tool/api/routes/export.py -- 2025-12-10
+- [x] #253 Implement POST /api/export -- 2025-12-10
+- [x] #254 Implement GET /api/export/formats -- 2025-12-10
+- [x] #255 Add routes to main.py -- 2025-12-10
 
 ### SwiftUI Export View
 - [ ] #256 Create ExportView.swift
@@ -514,12 +511,12 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 3: Memory | #95-135 | 41/41 | ✅ COMPLETE |
 | Phase 4: Research | #136-204 | 69/69 | ✅ COMPLETE |
 | Phase 5: Intelligence | #205-239 | 35/35 | ✅ COMPLETE |
-| Phase 6: Export | #240-270 | 0/31 | ❌ NOT STARTED |
+| Phase 6: Export | #240-270 | 19/31 | 🚧 IN PROGRESS (SwiftUI pending) |
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~242 (~79%)
-**Tests**: 522 passing (2025-12-10)
+**Completed**: ~261 (~85%)
+**Tests**: 549 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
