@@ -32,6 +32,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     # Startup
     logger.info("application_starting", host=settings.host, port=settings.port)
+
+    # Validate configuration
+    if not settings.validate_at_startup():
+        logger.error(
+            "startup_config_invalid",
+            message="Configuration validation failed - some features may not work"
+        )
+
+    # Run startup self-tests
+    from research_tool.core.startup import run_startup_tests
+    report = await run_startup_tests()
+
+    if not report.all_passed:
+        logger.error(
+            "startup_tests_failed",
+            critical_failures=report.critical_failures,
+            warnings=report.warnings
+        )
+
     yield
     # Shutdown
     logger.info("application_shutting_down")
