@@ -442,8 +442,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 - [x] #266 Test: Large export (1000 sources) doesn't crash -- 2025-12-10 (2 tests)
 
 ### Phase 6 Validation
-- [ ] #267 VALIDATE: Output anti-patterns #11, #12 not present
-- [ ] #268 VALIDATE: Reports include limitations
+- [x] #267 VALIDATE: Output anti-patterns #11, #12 not present -- 2025-12-10 (9 tests)
+- [x] #268 VALIDATE: Reports include limitations -- 2025-12-10 (verified in test_export.py)
 - [ ] #269 COMMIT: "feat: complete phase 6 export"
 - [ ] #270 MERGE: phase-6-export → develop
 
@@ -518,8 +518,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~269 (~88%)
-**Tests**: 608 passing (2025-12-10)
+**Completed**: ~271 (~88%)
+**Tests**: 617 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
@@ -527,9 +527,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ## TEST COVERAGE BREAKDOWN
 
-### Unit Tests (24 files, 298 tests)
+### Unit Tests (25 files, 307 tests)
 | File | Tests | Category |
 |------|-------|----------|
+| test_anti_patterns.py | 9 | Export |
 | test_binary_exports.py | 38 | Export |
 | test_template_loader.py | 21 | Export |
 | test_health.py | 2 | API |
