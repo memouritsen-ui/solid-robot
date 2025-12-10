@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
-from research_tool.api.routes import research
+from research_tool.api.routes import export, research
 from research_tool.api.websocket import chat_websocket, progress_handler
 from research_tool.core import Settings, get_logger
 
@@ -49,6 +49,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(research.router)
+app.include_router(export.router)
 
 
 @app.get("/api/health")
