@@ -435,10 +435,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 ### Phase 6 Tests
 - [x] #260 Test: Markdown export valid -- 2025-12-10 (11 tests)
 - [x] #261 Test: JSON export valid -- 2025-12-10 (10 tests)
-- [ ] #262 Test: PDF export opens correctly
-- [ ] #263 Test: DOCX export opens correctly
-- [ ] #264 Test: PPTX export opens correctly
-- [ ] #265 Test: XLSX export opens correctly
+- [x] #262 Test: PDF export opens correctly -- 2025-12-10 (8 tests)
+- [x] #263 Test: DOCX export opens correctly -- 2025-12-10 (10 tests)
+- [x] #264 Test: PPTX export opens correctly -- 2025-12-10 (10 tests)
+- [x] #265 Test: XLSX export opens correctly -- 2025-12-10 (10 tests)
 - [x] #266 Test: Large export (1000 sources) doesn't crash -- 2025-12-10 (2 tests)
 
 ### Phase 6 Validation
@@ -518,8 +518,8 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 | Phase 7: Polish | #271-307 | 0/37 | ❌ NOT STARTED |
 
 **Total Tasks**: 307
-**Completed**: ~265 (~86%)
-**Tests**: 570 passing (2025-12-10)
+**Completed**: ~269 (~88%)
+**Tests**: 608 passing (2025-12-10)
 **Linting**: 0 errors
 **Type checking**: 0 errors
 
@@ -527,9 +527,10 @@ cd backend && uv run python -m mypy src/ --ignore-missing-imports
 
 ## TEST COVERAGE BREAKDOWN
 
-### Unit Tests (23 files, 260 tests)
+### Unit Tests (24 files, 298 tests)
 | File | Tests | Category |
 |------|-------|----------|
+| test_binary_exports.py | 38 | Export |
 | test_template_loader.py | 21 | Export |
 | test_health.py | 2 | API |
 | test_llm_router.py | 12 | LLM |
