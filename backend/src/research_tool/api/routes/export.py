@@ -1,5 +1,7 @@
 """Export API endpoints."""
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -35,11 +37,11 @@ class ExportRequest(BaseModel):
     query: str
     domain: str
     summary: str
-    facts: list[dict[str, object]]
-    sources: list[dict[str, object]]
+    facts: list[dict[str, Any]]
+    sources: list[dict[str, Any]]
     confidence_score: float
     limitations: list[str]
-    metadata: dict[str, object] = {}
+    metadata: dict[str, Any] = {}
 
 
 class ExportFormatInfo(BaseModel):
