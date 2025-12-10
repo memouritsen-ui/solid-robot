@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from research_tool.api.routes import export, research
 from research_tool.api.websocket import chat_websocket, progress_handler
 from research_tool.core import Settings, get_logger
+from research_tool.utils.profiling import (
+    TimingMiddleware,
+    create_timing_callback,
+    get_profiler,
+)
 
 settings = Settings()
 logger = get_logger(__name__)
@@ -47,6 +53,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Performance timing middleware
+app.add_middleware(TimingMiddleware, callback=create_timing_callback())
+
 # Include routers
 app.include_router(research.router)
 app.include_router(export.router)
@@ -60,6 +69,20 @@ async def health_check() -> dict[str, str]:
         Dictionary with status and version.
     """
     return {"status": "healthy", "version": "0.1.0"}
+
+
+@app.get("/api/metrics/performance")
+async def performance_metrics() -> dict[str, Any]:
+    """Get performance metrics for all endpoints.
+
+    Returns:
+        Dictionary with timing stats and slow endpoints.
+    """
+    profiler = get_profiler()
+    return {
+        "slow_endpoints": profiler.get_slow_endpoints(threshold_ms=100),
+        "health_stats": profiler.get_stats("/api/health", "GET"),
+    }
 
 
 @app.websocket("/ws/chat")
