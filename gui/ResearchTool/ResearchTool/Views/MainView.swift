@@ -66,6 +66,9 @@ struct ConnectionStatusView: View {
 
 /// Placeholder for research view (to be implemented in Phase 4+)
 struct ResearchPlaceholderView: View {
+    @ObservedObject var appState = AppState.shared
+    @State private var showingExportSheet: Bool = false
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass.circle")
@@ -79,9 +82,33 @@ struct ResearchPlaceholderView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+
+            // Export button (enabled when research session exists)
+            if let sessionId = appState.activeResearchSessionId {
+                Divider()
+                    .padding(.vertical)
+
+                Button(action: { showingExportSheet = true }) {
+                    Label("Export Results", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.borderedProminent)
+                .sheet(isPresented: $showingExportSheet) {
+                    ExportView(sessionId: sessionId)
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.windowBackgroundColor))
         .navigationTitle("Research")
+        .toolbar {
+            ToolbarItem(placement: .automatic) {
+                if appState.activeResearchSessionId != nil {
+                    Button(action: { showingExportSheet = true }) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .help("Export research results")
+                }
+            }
+        }
     }
 }
