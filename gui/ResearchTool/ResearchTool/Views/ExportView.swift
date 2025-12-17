@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Export format option
+/// Export format option - matches backend ExportFormatInfo
 enum ExportFormat: String, CaseIterable, Identifiable {
     case markdown
     case json
@@ -60,22 +60,23 @@ enum ExportFormat: String, CaseIterable, Identifiable {
 /// Export state for tracking export progress
 enum ExportState: Equatable {
     case idle
+    case loadingFormats
     case exporting
     case success(URL)
     case failure(String)
 }
 
 /// View for exporting research results to various formats
+/// Now accepts the report directly instead of session_id
 struct ExportView: View {
-    let sessionId: String
+    /// The research report to export
+    let report: ResearchReportResponse
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedFormat: ExportFormat = .markdown
     @State private var exportState: ExportState = .idle
-    @State private var includeMetadata: Bool = true
-    @State private var includeSources: Bool = true
-
-    private let baseURL = "http://localhost:8002"
+    @State private var availableFormats: [ExportFormatInfo] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -86,21 +87,24 @@ struct ExportView: View {
 
             // Content
             Form {
+                reportSummarySection
                 formatSelectionSection
-                optionsSection
                 exportButtonSection
                 statusSection
             }
             .formStyle(.grouped)
         }
-        .frame(width: 400, height: 450)
+        .frame(width: 450, height: 500)
+        .task {
+            await loadFormats()
+        }
     }
 
     // MARK: - Header
 
     private var headerView: some View {
         HStack {
-            Text("Export Research")
+            Text("Export Research Report")
                 .font(.headline)
             Spacer()
             Button("Cancel") {
@@ -109,6 +113,37 @@ struct ExportView: View {
             .keyboardShortcut(.cancelAction)
         }
         .padding()
+    }
+
+    // MARK: - Report Summary
+
+    private var reportSummarySection: some View {
+        Section("Report Summary") {
+            if let query = report.query {
+                LabeledContent("Query") {
+                    Text(query)
+                        .lineLimit(2)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            LabeledContent("Facts") {
+                Text("\(report.facts?.count ?? 0)")
+                    .foregroundColor(.secondary)
+            }
+
+            LabeledContent("Sources") {
+                Text("\(report.sources?.count ?? 0)")
+                    .foregroundColor(.secondary)
+            }
+
+            if let confidence = report.confidenceScore {
+                LabeledContent("Confidence") {
+                    Text(String(format: "%.0f%%", confidence * 100))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
     }
 
     // MARK: - Format Selection
@@ -146,15 +181,6 @@ struct ExportView: View {
         }
     }
 
-    // MARK: - Options
-
-    private var optionsSection: some View {
-        Section("Options") {
-            Toggle("Include metadata", isOn: $includeMetadata)
-            Toggle("Include source list", isOn: $includeSources)
-        }
-    }
-
     // MARK: - Export Button
 
     private var exportButtonSection: some View {
@@ -177,6 +203,8 @@ struct ExportView: View {
 
     private var exportButtonText: String {
         switch exportState {
+        case .loadingFormats:
+            return "Loading formats..."
         case .exporting:
             return "Exporting..."
         default:
@@ -185,10 +213,12 @@ struct ExportView: View {
     }
 
     private var isExportDisabled: Bool {
-        if case .exporting = exportState {
+        switch exportState {
+        case .loadingFormats, .exporting:
             return true
+        default:
+            return false
         }
-        return sessionId.isEmpty
     }
 
     // MARK: - Status
@@ -196,7 +226,7 @@ struct ExportView: View {
     @ViewBuilder
     private var statusSection: some View {
         switch exportState {
-        case .idle:
+        case .idle, .loadingFormats:
             EmptyView()
 
         case .exporting:
@@ -227,6 +257,13 @@ struct ExportView: View {
                         Button("Show in Finder") {
                             NSWorkspace.shared.selectFile(url.path, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
                         }
+
+                        Spacer()
+
+                        Button("Done") {
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
                 }
             }
@@ -249,60 +286,39 @@ struct ExportView: View {
         }
     }
 
+    // MARK: - Load Formats
+
+    private func loadFormats() async {
+        exportState = .loadingFormats
+
+        do {
+            availableFormats = try await APIClient.shared.getExportFormats()
+            exportState = .idle
+        } catch {
+            // Use default formats if API fails
+            print("[ExportView] Failed to load formats: \(error.localizedDescription)")
+            exportState = .idle
+        }
+    }
+
     // MARK: - Export Logic
 
     private func exportReport() {
-        guard !sessionId.isEmpty else { return }
-
         exportState = .exporting
 
         Task {
             do {
-                let data = try await fetchExport()
+                // Use the APIClient to export with full report data
+                let data = try await APIClient.shared.exportResearch(
+                    report: report,
+                    format: selectedFormat.rawValue
+                )
                 let savedURL = try await saveFile(data: data)
                 exportState = .success(savedURL)
             } catch {
                 exportState = .failure(error.localizedDescription)
             }
         }
-    }
-
-    private func fetchExport() async throws -> Data {
-        guard let url = URL(string: "\(baseURL)/api/export") else {
-            throw ExportError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "session_id": sessionId,
-            "format": selectedFormat.rawValue,
-            "options": [
-                "include_metadata": includeMetadata,
-                "include_sources": includeSources
-            ]
-        ]
-
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ExportError.invalidResponse
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Try to parse error message
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let detail = json["detail"] as? String {
-                throw ExportError.serverError(detail)
-            }
-            throw ExportError.httpError(httpResponse.statusCode)
-        }
-
-        return data
     }
 
     private func saveFile(data: Data) async throws -> URL {
@@ -353,7 +369,18 @@ enum ExportError: LocalizedError {
 #if DEBUG
 struct ExportView_Previews: PreviewProvider {
     static var previews: some View {
-        ExportView(sessionId: "test-session-123")
+        ExportView(report: ResearchReportResponse(
+            sessionId: "test-123",
+            query: "What is quantum computing?",
+            domain: "academic",
+            summary: "A test summary",
+            facts: nil,
+            sources: nil,
+            entities: nil,
+            confidenceScore: 0.85,
+            limitations: nil,
+            generatedAt: nil
+        ))
     }
 }
 #endif

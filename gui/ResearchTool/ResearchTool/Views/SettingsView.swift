@@ -409,29 +409,31 @@ class APIKeyManager: ObservableObject {
     func testKey(_ type: KeychainService.APIKeyType) async {
         testStatus[type] = .testing
 
-        // Test key by calling backend health endpoint
-        guard let url = URL(string: "http://localhost:8002/api/health/detailed") else {
-            testStatus[type] = .invalid
-            return
-        }
-
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let components = json["components"] as? [String: Any] {
+            let health = try await APIClient.shared.checkDetailedHealth()
 
-                // Check specific provider status
+            // Check specific provider status based on components
+            if let components = health.components {
                 switch type {
                 case .anthropic:
-                    if let anthropic = components["anthropic"] as? [String: Any],
-                       let status = anthropic["status"] as? String {
-                        testStatus[type] = status == "healthy" ? .valid : .invalid
+                    if let anthropic = components["anthropic"] {
+                        testStatus[type] = anthropic.status == "healthy" ? .valid : .invalid
+                    } else {
+                        testStatus[type] = .invalid
                     }
-                case .tavily, .brave, .exa:
-                    if let providers = components["search_providers"] as? [String: Any],
-                       let provider = providers[type.rawValue.lowercased().replacingOccurrences(of: "_api_key", with: "")] as? [String: Any],
-                       let configured = provider["configured"] as? Bool {
-                        testStatus[type] = configured ? .valid : .invalid
+                case .tavily:
+                    if let searchProviders = components["search_providers"],
+                       searchProviders.status == "healthy" {
+                        // Tavily is typically part of search_providers
+                        testStatus[type] = .valid
+                    } else {
+                        testStatus[type] = .invalid
+                    }
+                case .brave, .exa:
+                    // Similar check for other providers
+                    if let searchProviders = components["search_providers"],
+                       searchProviders.status == "healthy" {
+                        testStatus[type] = .valid
                     } else {
                         testStatus[type] = .invalid
                     }
@@ -440,22 +442,27 @@ class APIKeyManager: ObservableObject {
                 testStatus[type] = .invalid
             }
         } catch {
+            print("[APIKeyManager] Test key failed: \(error.localizedDescription)")
             testStatus[type] = .invalid
         }
     }
 
     func refreshBackendHealth() async {
-        guard let url = URL(string: "http://localhost:8002/api/health/detailed") else { return }
-
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let components = json["components"] as? [String: Any],
-               let ollama = components["ollama"] as? [String: Any],
-               let status = ollama["status"] as? String {
-                ollamaHealthy = status == "healthy"
+            let health = try await APIClient.shared.checkDetailedHealth()
+
+            // Update connection status
+            AppState.shared.setConnected(health.status == "healthy" || health.status == "degraded")
+
+            // Check Ollama status
+            if let components = health.components,
+               let ollama = components["ollama"] {
+                ollamaHealthy = ollama.status == "healthy"
+            } else {
+                ollamaHealthy = false
             }
         } catch {
+            AppState.shared.setConnected(false)
             ollamaHealthy = false
         }
     }

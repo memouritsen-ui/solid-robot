@@ -27,89 +27,273 @@ enum APIError: LocalizedError {
     }
 }
 
-// MARK: - Response Models
+// MARK: - Response Models (Matching Backend OpenAPI Spec)
 
+/// Response from POST /api/research/start
 struct StartResearchResponse: Codable {
     let sessionId: String
     let status: String
+    let message: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case status
+        case message
     }
 }
 
+/// Response from GET /api/research/{session_id}/status
+/// Matches backend ResearchStatus schema exactly
 struct ResearchStatusResponse: Codable {
     let sessionId: String
-    let currentPhase: String
-    let entitiesFound: [EntityItem]
-    let factsExtracted: [FactItem]
-    let sourcesQueried: [String]
+    let status: String  // "running", "completed", "failed"
+    let currentPhase: String?
+    let sourcesQueried: Int
+    let entitiesFound: Int
+    let factsExtracted: Int
     let saturationMetrics: SaturationMetrics?
-    let shouldStop: Bool
+    let stopReason: String?
+    let exportPath: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
+        case status
         case currentPhase = "current_phase"
+        case sourcesQueried = "sources_queried"
         case entitiesFound = "entities_found"
         case factsExtracted = "facts_extracted"
-        case sourcesQueried = "sources_queried"
         case saturationMetrics = "saturation_metrics"
-        case shouldStop = "should_stop"
+        case stopReason = "stop_reason"
+        case exportPath = "export_path"
+    }
+
+    /// Convenience: Check if research is complete
+    var isComplete: Bool {
+        status == "completed" || status == "failed"
+    }
+
+    /// Convenience: Check if research failed
+    var isFailed: Bool {
+        status == "failed"
     }
 }
 
-struct EntityItem: Codable {
-    let name: String?
-    let type: String?
-}
-
-struct FactItem: Codable {
-    let statement: String?
-    let confidence: Double?
-    let sources: [String]?
-}
-
+/// Saturation metrics from backend evaluate.py
+/// Keys match backend: new_entities_ratio, new_facts_ratio, citation_circularity, source_coverage
 struct SaturationMetrics: Codable {
-    let entityGrowth: Double?
-    let factGrowth: Double?
-    let sourceExhaustion: Double?
-    let overallSaturation: Double?
+    let newEntitiesRatio: Double?
+    let newFactsRatio: Double?
+    let citationCircularity: Double?
+    let sourceCoverage: Double?
 
     enum CodingKeys: String, CodingKey {
-        case entityGrowth = "entity_growth"
-        case factGrowth = "fact_growth"
-        case sourceExhaustion = "source_exhaustion"
-        case overallSaturation = "overall_saturation"
+        case newEntitiesRatio = "new_entities_ratio"
+        case newFactsRatio = "new_facts_ratio"
+        case citationCircularity = "citation_circularity"
+        case sourceCoverage = "source_coverage"
+    }
+
+    /// Calculate overall saturation (0-100%)
+    var overallSaturation: Double {
+        let entitySat = 1.0 - min(newEntitiesRatio ?? 1.0, 1.0)
+        let factSat = 1.0 - min(newFactsRatio ?? 1.0, 1.0)
+        let coverage = sourceCoverage ?? 0.0
+        return (0.4 * entitySat + 0.4 * factSat + 0.2 * coverage) * 100.0
     }
 }
 
+/// Response from POST /api/research/{session_id}/stop
 struct StopResearchResponse: Codable {
-    let status: String
-}
-
-struct ResearchReportResponse: Codable {
     let sessionId: String
-    let finalReport: FinalReport?
+    let status: String
+    let message: String?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
-        case finalReport = "final_report"
+        case status
+        case message
     }
 }
 
-struct FinalReport: Codable {
+/// Response from POST /api/research/{session_id}/approve
+struct ApproveResearchResponse: Codable {
+    let sessionId: String
+    let status: String
+    let message: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case status
+        case message
+    }
+}
+
+/// Response from GET /api/research/{session_id}/report
+struct ResearchReportResponse: Codable {
+    let sessionId: String?
+    let query: String?
+    let domain: String?
     let summary: String?
-    let sections: [[String: String]]?
-    let sources: [String]?
+    let facts: [[String: AnyCodableValue]]?
+    let sources: [[String: AnyCodableValue]]?
+    let entities: [String]?
+    let confidenceScore: Double?
+    let limitations: [String]?
+    let generatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case query
+        case domain
+        case summary
+        case facts
+        case sources
+        case entities
+        case confidenceScore = "confidence_score"
+        case limitations
+        case generatedAt = "generated_at"
+    }
 }
 
-struct ExportFormatsResponse: Codable {
-    let formats: [String]
+/// Session summary for list endpoint
+struct ResearchSessionSummary: Codable {
+    let sessionId: String
+    let status: String
+    let query: String
+    let currentPhase: String?
+    let startedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case status
+        case query
+        case currentPhase = "current_phase"
+        case startedAt = "started_at"
+    }
 }
 
+/// Response from GET /api/export/formats - array of ExportFormatInfo
+struct ExportFormatInfo: Codable {
+    let format: String
+    let mimeType: String
+    let fileExtension: String
+    let description: String
+
+    enum CodingKeys: String, CodingKey {
+        case format
+        case mimeType = "mime_type"
+        case fileExtension = "file_extension"
+        case description
+    }
+}
+
+/// Response from GET /api/health
 struct HealthResponse: Codable {
     let status: String
+    let version: String?
+}
+
+/// Response from GET /api/health/detailed
+struct DetailedHealthResponse: Codable {
+    let status: String
+    let components: [String: ComponentHealth]?
+    let providersAvailable: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case components
+        case providersAvailable = "providers_available"
+    }
+}
+
+struct ComponentHealth: Codable {
+    let status: String?
+    let configured: Bool?
+    let healthy: Bool?
+    let models: [String]?
+    let error: String?
+}
+
+// MARK: - Helper for decoding mixed JSON values
+
+enum AnyCodableValue: Codable {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    case bool(Bool)
+    case array([AnyCodableValue])
+    case dictionary([String: AnyCodableValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if container.decodeNil() {
+            self = .null
+            return
+        }
+
+        if let bool = try? container.decode(Bool.self) {
+            self = .bool(bool)
+            return
+        }
+
+        if let int = try? container.decode(Int.self) {
+            self = .int(int)
+            return
+        }
+
+        if let double = try? container.decode(Double.self) {
+            self = .double(double)
+            return
+        }
+
+        if let string = try? container.decode(String.self) {
+            self = .string(string)
+            return
+        }
+
+        if let array = try? container.decode([AnyCodableValue].self) {
+            self = .array(array)
+            return
+        }
+
+        if let dict = try? container.decode([String: AnyCodableValue].self) {
+            self = .dictionary(dict)
+            return
+        }
+
+        throw DecodingError.typeMismatch(
+            AnyCodableValue.self,
+            DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Unsupported type")
+        )
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value): try container.encode(value)
+        case .int(let value): try container.encode(value)
+        case .double(let value): try container.encode(value)
+        case .bool(let value): try container.encode(value)
+        case .array(let value): try container.encode(value)
+        case .dictionary(let value): try container.encode(value)
+        case .null: try container.encodeNil()
+        }
+    }
+
+    var stringValue: String? {
+        if case .string(let s) = self { return s }
+        return nil
+    }
+
+    var doubleValue: Double? {
+        switch self {
+        case .double(let d): return d
+        case .int(let i): return Double(i)
+        default: return nil
+        }
+    }
 }
 
 // MARK: - API Client
@@ -136,12 +320,23 @@ class APIClient {
 
     // MARK: - Research Endpoints
 
+    /// List all active research sessions
+    /// GET /api/research
+    func listSessions() async throws -> [ResearchSessionSummary] {
+        return try await get(path: "/api/research", timeout: defaultTimeout)
+    }
+
     /// Start a new research session
-    func startResearch(query: String, privacyMode: String) async throws -> StartResearchResponse {
-        let body: [String: Any] = [
+    /// POST /api/research/start
+    func startResearch(query: String, privacyMode: String, domain: String? = nil, maxSources: Int = 20) async throws -> StartResearchResponse {
+        var body: [String: Any] = [
             "query": query,
-            "privacy_mode": privacyMode
+            "privacy_mode": privacyMode,
+            "max_sources": maxSources
         ]
+        if let domain = domain {
+            body["domain"] = domain
+        }
         return try await post(
             path: "/api/research/start",
             body: body,
@@ -150,6 +345,7 @@ class APIClient {
     }
 
     /// Get status of a research session
+    /// GET /api/research/{session_id}/status
     func getResearchStatus(sessionId: String) async throws -> ResearchStatusResponse {
         return try await get(
             path: "/api/research/\(sessionId)/status",
@@ -158,6 +354,7 @@ class APIClient {
     }
 
     /// Stop a research session
+    /// POST /api/research/{session_id}/stop
     func stopResearch(sessionId: String) async throws -> StopResearchResponse {
         return try await post(
             path: "/api/research/\(sessionId)/stop",
@@ -166,7 +363,18 @@ class APIClient {
         )
     }
 
+    /// Approve research plan to continue workflow
+    /// POST /api/research/{session_id}/approve
+    func approveResearchPlan(sessionId: String) async throws -> ApproveResearchResponse {
+        return try await post(
+            path: "/api/research/\(sessionId)/approve",
+            body: [:],
+            timeout: defaultTimeout
+        )
+    }
+
     /// Get final research report
+    /// GET /api/research/{session_id}/report
     func getResearchReport(sessionId: String) async throws -> ResearchReportResponse {
         return try await get(
             path: "/api/research/\(sessionId)/report",
@@ -176,34 +384,65 @@ class APIClient {
 
     // MARK: - Export Endpoints
 
-    /// Export research results as binary data
-    func exportResearch(
-        sessionId: String,
-        format: String,
-        includeMetadata: Bool = true,
-        includeSources: Bool = true
-    ) async throws -> Data {
+    /// Get available export formats
+    /// GET /api/export/formats
+    func getExportFormats() async throws -> [ExportFormatInfo] {
+        return try await get(path: "/api/export/formats", timeout: defaultTimeout)
+    }
+
+    /// Export research results
+    /// POST /api/export
+    /// Note: Backend expects the full report data, not just session_id
+    func exportResearch(report: ResearchReportResponse, format: String) async throws -> Data {
         let body: [String: Any] = [
-            "session_id": sessionId,
             "format": format,
-            "options": [
-                "include_metadata": includeMetadata,
-                "include_sources": includeSources
-            ]
+            "query": report.query ?? "",
+            "domain": report.domain ?? "general",
+            "summary": report.summary ?? "",
+            "facts": report.facts?.map { dict -> [String: Any] in
+                var result: [String: Any] = [:]
+                for (key, value) in dict {
+                    switch value {
+                    case .string(let s): result[key] = s
+                    case .int(let i): result[key] = i
+                    case .double(let d): result[key] = d
+                    case .bool(let b): result[key] = b
+                    default: break
+                    }
+                }
+                return result
+            } ?? [],
+            "sources": report.sources?.map { dict -> [String: Any] in
+                var result: [String: Any] = [:]
+                for (key, value) in dict {
+                    switch value {
+                    case .string(let s): result[key] = s
+                    case .int(let i): result[key] = i
+                    case .double(let d): result[key] = d
+                    case .bool(let b): result[key] = b
+                    default: break
+                    }
+                }
+                return result
+            } ?? [],
+            "confidence_score": report.confidenceScore ?? 0.0,
+            "limitations": report.limitations ?? []
         ]
         return try await postRaw(path: "/api/export", body: body)
     }
 
-    /// Get available export formats
-    func getExportFormats() async throws -> ExportFormatsResponse {
-        return try await get(path: "/api/export/formats", timeout: defaultTimeout)
-    }
+    // MARK: - Health Endpoints
 
-    // MARK: - Health Endpoint
-
-    /// Check backend health
+    /// Basic health check
+    /// GET /api/health
     func checkHealth() async throws -> HealthResponse {
         return try await get(path: "/api/health", timeout: 5)
+    }
+
+    /// Detailed health check with component status
+    /// GET /api/health/detailed
+    func checkDetailedHealth() async throws -> DetailedHealthResponse {
+        return try await get(path: "/api/health/detailed", timeout: 10)
     }
 
     // MARK: - Generic Request Helpers
@@ -294,6 +533,7 @@ class APIClient {
         } catch let error as APIError {
             throw error
         } catch let error as DecodingError {
+            print("[APIClient] Decoding error: \(error)")
             throw APIError.decodingError(error)
         } catch {
             throw APIError.networkError(error)

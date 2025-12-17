@@ -6,6 +6,7 @@ enum ResearchPhase: String, CaseIterable {
     case idle = "idle"
     case starting = "starting"
     case clarify = "clarify"
+    case plan = "plan"
     case collect = "collect"
     case process = "process"
     case analyze = "analyze"
@@ -14,12 +15,15 @@ enum ResearchPhase: String, CaseIterable {
     case synthesize = "synthesize"
     case export = "export"
     case complete = "complete"
+    case failed = "failed"
+    case awaitingApproval = "awaiting_approval"
 
     var displayName: String {
         switch self {
         case .idle: return "Idle"
         case .starting: return "Starting"
         case .clarify: return "Clarifying"
+        case .plan: return "Planning"
         case .collect: return "Collecting"
         case .process: return "Processing"
         case .analyze: return "Analyzing"
@@ -28,6 +32,8 @@ enum ResearchPhase: String, CaseIterable {
         case .synthesize: return "Synthesizing"
         case .export: return "Exporting"
         case .complete: return "Complete"
+        case .failed: return "Failed"
+        case .awaitingApproval: return "Awaiting Approval"
         }
     }
 
@@ -35,7 +41,8 @@ enum ResearchPhase: String, CaseIterable {
         switch self {
         case .idle: return "circle"
         case .starting: return "play.circle"
-        case .clarify: return "magnifyingglass"
+        case .clarify: return "questionmark.circle"
+        case .plan: return "list.bullet.clipboard"
         case .collect: return "arrow.down.doc"
         case .process: return "gearshape"
         case .analyze: return "chart.bar"
@@ -44,6 +51,8 @@ enum ResearchPhase: String, CaseIterable {
         case .synthesize: return "doc.text"
         case .export: return "square.and.arrow.up"
         case .complete: return "checkmark.circle.fill"
+        case .failed: return "xmark.circle.fill"
+        case .awaitingApproval: return "hand.raised"
         }
     }
 
@@ -52,15 +61,34 @@ enum ResearchPhase: String, CaseIterable {
         case .idle: return 0
         case .starting: return 1
         case .clarify: return 2
-        case .collect: return 3
-        case .process: return 4
-        case .analyze: return 5
-        case .verify: return 6
-        case .evaluate: return 7
-        case .synthesize: return 8
-        case .export: return 9
-        case .complete: return 10
+        case .plan: return 3
+        case .collect: return 4
+        case .process: return 5
+        case .analyze: return 6
+        case .verify: return 7
+        case .evaluate: return 8
+        case .synthesize: return 9
+        case .export: return 10
+        case .complete: return 11
+        case .failed: return 11
+        case .awaitingApproval: return 3  // Same as plan (waiting for user)
         }
+    }
+
+    /// Phases to show in the progress indicator (excludes idle, complete, failed, awaitingApproval)
+    static var progressPhases: [ResearchPhase] {
+        [.starting, .clarify, .plan, .collect, .process, .analyze, .verify, .evaluate, .synthesize, .export]
+    }
+}
+
+/// Research status from backend
+enum ResearchStatus: String {
+    case running = "running"
+    case completed = "completed"
+    case failed = "failed"
+
+    var isTerminal: Bool {
+        self == .completed || self == .failed
     }
 }
 
@@ -73,6 +101,7 @@ class ResearchViewModel: ObservableObject {
     @Published var query: String = ""
     @Published var isResearching: Bool = false
     @Published var currentPhase: ResearchPhase = .idle
+    @Published var researchStatus: ResearchStatus = .running
     @Published var progress: Double = 0.0 // 0-1
     @Published var entitiesCount: Int = 0
     @Published var factsCount: Int = 0
@@ -82,10 +111,34 @@ class ResearchViewModel: ObservableObject {
     @Published var sessionId: String?
     @Published var privacyMode: PrivacyMode = .cloudAllowed
     @Published var showingExport: Bool = false
+    @Published var stopReason: String?
+
+    /// The final report when research completes
+    @Published var finalReport: ResearchReportResponse?
+
+    /// Whether research is waiting for user approval to continue
+    @Published var isAwaitingApproval: Bool = false
 
     // MARK: - Private Properties
 
     private var pollingTask: Task<Void, Never>?
+
+    // MARK: - Computed Properties
+
+    /// Whether the research has completed (successfully or with failure)
+    var isComplete: Bool {
+        currentPhase == .complete || currentPhase == .failed
+    }
+
+    /// Whether the research failed
+    var isFailed: Bool {
+        currentPhase == .failed || researchStatus == .failed
+    }
+
+    /// Whether export is available (research completed successfully)
+    var canExport: Bool {
+        currentPhase == .complete && finalReport != nil
+    }
 
     // MARK: - Public Methods
 
@@ -98,16 +151,19 @@ class ResearchViewModel: ObservableObject {
         // Reset state
         errorMessage = nil
         currentPhase = .starting
+        researchStatus = .running
         progress = 0.0
         entitiesCount = 0
         factsCount = 0
         sourcesCount = 0
         saturationPercent = 0.0
+        stopReason = nil
+        finalReport = nil
+        isAwaitingApproval = false
 
         isResearching = true
 
         do {
-            // Use APIClient instead of manual URL construction
             let response = try await APIClient.shared.startResearch(
                 query: query,
                 privacyMode: privacyMode.rawValue.lowercased()
@@ -115,6 +171,8 @@ class ResearchViewModel: ObservableObject {
 
             sessionId = response.sessionId
             AppState.shared.startResearchSession(id: response.sessionId)
+
+            print("[ResearchViewModel] Started session: \(response.sessionId)")
 
             // Start polling status
             startPolling()
@@ -134,15 +192,41 @@ class ResearchViewModel: ObservableObject {
         pollingTask = nil
 
         do {
-            // Use APIClient
-            _ = try await APIClient.shared.stopResearch(sessionId: id)
+            let response = try await APIClient.shared.stopResearch(sessionId: id)
+            print("[ResearchViewModel] Stop response: \(response.status)")
         } catch {
             handleError(error)
         }
 
         isResearching = false
         currentPhase = .complete
+        stopReason = "User requested stop"
         AppState.shared.endResearchSession()
+    }
+
+    /// Approve research plan to continue workflow
+    func approveResearchPlan() async {
+        guard let id = sessionId else { return }
+
+        do {
+            let response = try await APIClient.shared.approveResearchPlan(sessionId: id)
+            print("[ResearchViewModel] Approve response: \(response.status)")
+            isAwaitingApproval = false
+        } catch {
+            handleError(error)
+        }
+    }
+
+    /// Fetch the final report for a completed session
+    func fetchReport() async {
+        guard let id = sessionId else { return }
+
+        do {
+            finalReport = try await APIClient.shared.getResearchReport(sessionId: id)
+            print("[ResearchViewModel] Fetched report with \(finalReport?.facts?.count ?? 0) facts")
+        } catch {
+            handleError(error)
+        }
     }
 
     /// Reset the research state
@@ -153,6 +237,7 @@ class ResearchViewModel: ObservableObject {
         query = ""
         isResearching = false
         currentPhase = .idle
+        researchStatus = .running
         progress = 0.0
         entitiesCount = 0
         factsCount = 0
@@ -161,6 +246,9 @@ class ResearchViewModel: ObservableObject {
         errorMessage = nil
         sessionId = nil
         showingExport = false
+        stopReason = nil
+        finalReport = nil
+        isAwaitingApproval = false
 
         AppState.shared.endResearchSession()
     }
@@ -182,73 +270,86 @@ class ResearchViewModel: ObservableObject {
         guard let id = sessionId else { return }
 
         do {
-            // Use APIClient for status polling
             let status = try await APIClient.shared.getResearchStatus(sessionId: id)
 
-            // Update phase
-            if let phase = ResearchPhase(rawValue: status.currentPhase.lowercased()) {
+            // Update research status
+            if let rs = ResearchStatus(rawValue: status.status) {
+                researchStatus = rs
+            }
+
+            // Update phase from current_phase string
+            if let phaseString = status.currentPhase?.lowercased(),
+               let phase = ResearchPhase(rawValue: phaseString) {
                 currentPhase = phase
                 // Calculate progress based on phase
-                progress = Double(phase.stepNumber) / Double(ResearchPhase.allCases.count - 1)
+                let totalPhases = Double(ResearchPhase.progressPhases.count)
+                progress = min(Double(phase.stepNumber) / totalPhases, 1.0)
             }
 
-            // Update stats - these are arrays, get their counts
-            entitiesCount = status.entitiesFound.count
-            factsCount = status.factsExtracted.count
-            sourcesCount = status.sourcesQueried.count
+            // Update stats - these are integers from the backend
+            entitiesCount = status.entitiesFound
+            factsCount = status.factsExtracted
+            sourcesCount = status.sourcesQueried
 
             // Update saturation from metrics
-            if let metrics = status.saturationMetrics,
-               let saturation = metrics.overallSaturation {
-                saturationPercent = saturation * 100.0
+            if let metrics = status.saturationMetrics {
+                saturationPercent = metrics.overallSaturation
             }
 
-            // Check if research should stop
-            if status.shouldStop {
+            // Store stop reason if present
+            if let reason = status.stopReason {
+                stopReason = reason
+            }
+
+            // Check if research is complete based on status field
+            if status.isComplete {
                 pollingTask?.cancel()
                 pollingTask = nil
                 isResearching = false
-                currentPhase = .complete
+
+                if status.isFailed {
+                    currentPhase = .failed
+                    errorMessage = status.stopReason ?? "Research failed"
+                } else {
+                    currentPhase = .complete
+                    // Fetch the final report
+                    await fetchReport()
+                }
+
                 AppState.shared.endResearchSession()
             }
 
         } catch {
-            // Don't stop polling on transient errors, just log
+            // Log error but don't stop polling for transient errors
             print("[ResearchViewModel] Poll error: \(error.localizedDescription)")
-            // Only show error if it's not a transient network issue
-            if !(error is URLError) && !(error is APIError) {
-                handleError(error)
+
+            // Only show error to user for persistent issues
+            if let apiError = error as? APIError {
+                switch apiError {
+                case .httpError(404):
+                    // Session not found - stop polling
+                    pollingTask?.cancel()
+                    pollingTask = nil
+                    isResearching = false
+                    currentPhase = .failed
+                    errorMessage = "Research session not found"
+                    AppState.shared.endResearchSession()
+                case .serverError(let msg):
+                    errorMessage = msg
+                default:
+                    // Transient error - continue polling
+                    break
+                }
             }
         }
     }
 
     private func handleError(_ error: Error) {
-        if let researchError = error as? ResearchError {
-            errorMessage = researchError.localizedDescription
+        if let apiError = error as? APIError {
+            errorMessage = apiError.localizedDescription
         } else {
             errorMessage = error.localizedDescription
         }
-    }
-}
-
-// MARK: - Research Errors
-
-enum ResearchError: LocalizedError {
-    case invalidURL
-    case invalidResponse
-    case httpError(Int)
-    case serverError(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return "Invalid API URL"
-        case .invalidResponse:
-            return "Invalid server response"
-        case .httpError(let code):
-            return "Server error (HTTP \(code))"
-        case .serverError(let message):
-            return message
-        }
+        print("[ResearchViewModel] Error: \(errorMessage ?? "unknown")")
     }
 }

@@ -15,8 +15,18 @@ struct ResearchView: View {
                     queryInputSection
 
                     // Progress section (only shown when researching or complete)
-                    if viewModel.isResearching || viewModel.currentPhase == .complete {
+                    if viewModel.isResearching || viewModel.isComplete {
                         progressSection
+                    }
+
+                    // Report summary (only shown when complete with report)
+                    if viewModel.currentPhase == .complete, let report = viewModel.finalReport {
+                        reportSummarySection(report: report)
+                    }
+
+                    // Error details (only shown when failed)
+                    if viewModel.isFailed {
+                        failedSection
                     }
                 }
                 .padding()
@@ -25,7 +35,7 @@ struct ResearchView: View {
             Divider()
 
             // Error banner
-            if let error = viewModel.errorMessage {
+            if let error = viewModel.errorMessage, !viewModel.isFailed {
                 errorBanner(error)
             }
 
@@ -45,8 +55,8 @@ struct ResearchView: View {
             }
         }
         .sheet(isPresented: $viewModel.showingExport) {
-            if let sessionId = viewModel.sessionId {
-                ExportView(sessionId: sessionId)
+            if let report = viewModel.finalReport {
+                ExportView(report: report)
             }
         }
     }
@@ -120,18 +130,43 @@ struct ResearchView: View {
 
     private var phaseIndicator: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Current Phase")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            HStack {
+                Text("Current Phase")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                // Current phase badge
+                HStack(spacing: 4) {
+                    Image(systemName: viewModel.currentPhase.icon)
+                    Text(viewModel.currentPhase.displayName)
+                }
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(phaseColor.opacity(0.2))
+                .foregroundColor(phaseColor)
+                .cornerRadius(6)
+            }
 
             // Phase steps (horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(ResearchPhase.allCases.filter { $0 != .idle && $0 != .complete }, id: \.self) { phase in
+                    ForEach(ResearchPhase.progressPhases, id: \.self) { phase in
                         phaseStepView(phase: phase)
                     }
                 }
             }
+        }
+    }
+
+    private var phaseColor: Color {
+        switch viewModel.currentPhase {
+        case .complete: return .green
+        case .failed: return .red
+        case .awaitingApproval: return .orange
+        default: return .blue
         }
     }
 
@@ -217,6 +252,105 @@ struct ResearchView: View {
         .cornerRadius(8)
     }
 
+    // MARK: - Report Summary Section
+
+    private func reportSummarySection(report: ResearchReportResponse) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label("Research Complete", systemImage: "checkmark.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.green)
+                Spacer()
+            }
+
+            // Summary
+            if let summary = report.summary, !summary.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Summary")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text(summary)
+                        .font(.body)
+                        .lineLimit(10)
+                }
+            }
+
+            // Key stats
+            HStack(spacing: 20) {
+                VStack {
+                    Text("\(report.facts?.count ?? 0)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text("Facts")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                VStack {
+                    Text("\(report.sources?.count ?? 0)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text("Sources")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if let confidence = report.confidenceScore {
+                    VStack {
+                        Text(String(format: "%.0f%%", confidence * 100))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Text("Confidence")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            // Stop reason if present
+            if let reason = viewModel.stopReason {
+                HStack {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.secondary)
+                    Text("Stopped: \(reason)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding()
+        .background(Color.green.opacity(0.1))
+        .cornerRadius(12)
+    }
+
+    // MARK: - Failed Section
+
+    private var failedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Research Failed", systemImage: "xmark.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.red)
+                Spacer()
+            }
+
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+
+            if let reason = viewModel.stopReason {
+                Text("Reason: \(reason)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color.red.opacity(0.1))
+        .cornerRadius(12)
+    }
+
     // MARK: - Error Banner
 
     private func errorBanner(_ error: String) -> some View {
@@ -242,7 +376,7 @@ struct ResearchView: View {
     private var actionButtonsSection: some View {
         HStack(spacing: 12) {
             // Reset button (only shown when complete or error)
-            if viewModel.currentPhase == .complete || viewModel.errorMessage != nil {
+            if viewModel.isComplete || viewModel.errorMessage != nil {
                 Button(action: {
                     viewModel.reset()
                     inputQuery = ""
@@ -256,8 +390,8 @@ struct ResearchView: View {
                 .buttonStyle(.bordered)
             }
 
-            // Export button (only shown when complete)
-            if viewModel.currentPhase == .complete {
+            // Export button (only shown when complete with report)
+            if viewModel.canExport {
                 Button(action: {
                     viewModel.showingExport = true
                 }) {
@@ -285,7 +419,7 @@ struct ResearchView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
-            } else if viewModel.currentPhase != .complete {
+            } else if !viewModel.isComplete {
                 Button(action: startResearch) {
                     HStack {
                         Image(systemName: "play.fill")
@@ -313,6 +447,3 @@ struct ResearchView: View {
         }
     }
 }
-
-// Preview requires Xcode, not available in Swift Package Manager
-// #Preview { ResearchView() }
