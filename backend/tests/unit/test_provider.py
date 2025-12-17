@@ -45,7 +45,11 @@ class TestSearchProviderInterface:
 
 
 class MockSearchProvider(SearchProvider):
-    """Mock implementation for testing."""
+    """Mock implementation for testing.
+
+    Note: Implements _do_search() because base SearchProvider.search()
+    wraps it with circuit breaker protection.
+    """
 
     @property
     def name(self) -> str:
@@ -55,12 +59,13 @@ class MockSearchProvider(SearchProvider):
     def requests_per_second(self) -> float:
         return 10.0
 
-    async def search(
+    async def _do_search(
         self,
         query: str,
         max_results: int = 10,
         filters: dict | None = None
     ) -> list[dict]:
+        """Internal search implementation wrapped by base search()."""
         return [
             {
                 "url": "https://example.com",
