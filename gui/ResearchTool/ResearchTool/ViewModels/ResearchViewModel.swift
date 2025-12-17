@@ -224,8 +224,67 @@ class ResearchViewModel: ObservableObject {
         do {
             finalReport = try await APIClient.shared.getResearchReport(sessionId: id)
             print("[ResearchViewModel] Fetched report with \(finalReport?.facts?.count ?? 0) facts")
+
+            // Auto-save to library
+            await saveToLibrary()
         } catch {
             handleError(error)
+        }
+    }
+
+    /// Save completed research to library for future reference
+    private func saveToLibrary() async {
+        guard let id = sessionId, let report = finalReport else { return }
+
+        // Convert AnyCodableValue facts to [String: Any]
+        let factsData: [[String: Any]] = report.facts?.map { dict in
+            var result: [String: Any] = [:]
+            for (key, value) in dict {
+                switch value {
+                case .string(let s): result[key] = s
+                case .int(let i): result[key] = i
+                case .double(let d): result[key] = d
+                case .bool(let b): result[key] = b
+                default: break
+                }
+            }
+            return result
+        } ?? []
+
+        // Convert AnyCodableValue sources to [String: Any]
+        let sourcesData: [[String: Any]] = report.sources?.map { dict in
+            var result: [String: Any] = [:]
+            for (key, value) in dict {
+                switch value {
+                case .string(let s): result[key] = s
+                case .int(let i): result[key] = i
+                case .double(let d): result[key] = d
+                case .bool(let b): result[key] = b
+                default: break
+                }
+            }
+            return result
+        } ?? []
+
+        do {
+            _ = try await APIClient.shared.saveToLibrary(
+                sessionId: id,
+                query: query,
+                domain: report.domain ?? "general",
+                privacyMode: privacyMode.rawValue.lowercased(),
+                status: "completed",
+                summary: report.summary,
+                facts: factsData,
+                sources: sourcesData,
+                entities: report.entities ?? [],
+                confidenceScore: report.confidenceScore,
+                startedAt: nil,  // TODO: Track started_at properly
+                completedAt: Date()
+            )
+            print("[ResearchViewModel] Session saved to library: \(id)")
+        } catch {
+            // Don't fail the research if library save fails
+            print("[ResearchViewModel] Failed to save to library: \(error.localizedDescription)")
         }
     }
 

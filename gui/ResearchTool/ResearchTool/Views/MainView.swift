@@ -8,12 +8,14 @@ struct MainView: View {
     enum NavigationTab: String, CaseIterable {
         case chat = "Chat"
         case research = "Research"
+        case library = "Library"
         case settings = "Settings"
 
         var icon: String {
             switch self {
             case .chat: return "bubble.left.and.bubble.right"
             case .research: return "magnifyingglass"
+            case .library: return "books.vertical"
             case .settings: return "gear"
             }
         }
@@ -35,6 +37,8 @@ struct MainView: View {
                 ChatView()
             case .research:
                 ResearchView()
+            case .library:
+                LibraryView()
             case .settings:
                 SettingsView()
             }
