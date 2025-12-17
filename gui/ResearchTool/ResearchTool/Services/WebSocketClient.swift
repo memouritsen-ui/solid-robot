@@ -47,7 +47,7 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
 
     // MARK: - Initialization
 
-    init(baseURL: String = "ws://localhost:8000") {
+    init(baseURL: String = "ws://localhost:8002") {
         self.baseURL = baseURL
         super.init()
     }

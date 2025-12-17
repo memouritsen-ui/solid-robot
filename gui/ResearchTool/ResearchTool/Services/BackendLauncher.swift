@@ -68,7 +68,7 @@ class BackendLauncher: ObservableObject {
 
     /// Check if backend is already running by testing the health endpoint
     func checkBackendHealth() async -> Bool {
-        guard let url = URL(string: "http://localhost:8000/api/health") else {
+        guard let url = URL(string: "http://localhost:8002/api/health") else {
             return false
         }
 
@@ -117,7 +117,25 @@ class BackendLauncher: ObservableObject {
 
         // Use zsh to ensure PATH is set correctly
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-l", "-c", "cd \(backendPath) && uv run python -m uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8000"]
+
+        // Build export commands for API keys from Keychain
+        let apiKeys = KeychainService.shared.getAllKeys()
+        var exportCommands = ""
+        for (key, value) in apiKeys {
+            // Escape single quotes in values for shell safety
+            let escapedValue = value.replacingOccurrences(of: "'", with: "'\\''")
+            exportCommands += "export \(key)='\(escapedValue)' && "
+        }
+
+        // Log which keys are being passed (without values for security)
+        if !apiKeys.isEmpty {
+            print("[BackendLauncher] Passing API keys to backend: \(apiKeys.keys.joined(separator: ", "))")
+        } else {
+            print("[BackendLauncher] No API keys configured in Keychain")
+        }
+
+        let command = "\(exportCommands)cd \(backendPath) && uv run python -m uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8002"
+        process.arguments = ["-l", "-c", command]
 
         // Set up output pipe for logging
         let pipe = Pipe()
@@ -152,6 +170,21 @@ class BackendLauncher: ObservableObject {
         outputPipe = nil
         isRunning = false
         statusMessage = "Backend stoppet"
+    }
+
+    /// Restart the backend to pick up new configuration (e.g., API keys)
+    func restartBackend() async {
+        statusMessage = "Genstarter backend..."
+        print("[BackendLauncher] Restarting backend to apply new configuration")
+
+        // Stop existing process
+        stopBackend()
+
+        // Wait a moment for port to be released
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+
+        // Start with new configuration
+        await startBackendIfNeeded()
     }
 
     deinit {

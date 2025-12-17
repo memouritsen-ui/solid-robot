@@ -20,13 +20,17 @@ let package = Package(
                 "Models/Message.swift",
                 "Services/WebSocketClient.swift",
                 "Services/BackendLauncher.swift",
+                "Services/APIClient.swift",
+                "Services/KeychainService.swift",
                 "ViewModels/ChatViewModel.swift",
+                "ViewModels/ResearchViewModel.swift",
                 "Views/ChatView.swift",
                 "Views/MainView.swift",
                 "Views/MessageBubble.swift",
                 "Views/PrivacyModePicker.swift",
                 "Views/SettingsView.swift",
-                "Views/ExportView.swift"
+                "Views/ExportView.swift",
+                "Views/ResearchView.swift"
             ]
         )
     ]

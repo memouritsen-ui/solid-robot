@@ -89,14 +89,17 @@ class ChatViewModel: ObservableObject, WebSocketClientDelegate {
 
     func webSocketDidConnect() {
         isConnected = true
+        AppState.shared.setConnected(true)
     }
 
     func webSocketDidDisconnect() {
         isConnected = false
+        AppState.shared.setConnected(false)
     }
 
     func webSocketDidFail(error: Error) {
         isConnected = false
+        AppState.shared.setConnected(false)
         handleError("Connection failed: \(error.localizedDescription)")
     }
 

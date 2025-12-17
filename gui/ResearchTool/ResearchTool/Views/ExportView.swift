@@ -75,7 +75,7 @@ struct ExportView: View {
     @State private var includeMetadata: Bool = true
     @State private var includeSources: Bool = true
 
-    private let baseURL = "http://localhost:8000"
+    private let baseURL = "http://localhost:8002"
 
     var body: some View {
         VStack(spacing: 0) {
