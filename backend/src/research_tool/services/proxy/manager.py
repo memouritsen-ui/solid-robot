@@ -1,28 +1,18 @@
-"""Proxy pool manager with rotation and health checking.
+"""Proxy pool management with automatic rotation and health checking."""
 
-Provides automatic proxy rotation for anti-ban protection during scraping.
-Supports multiple rotation strategies and automatic failure detection.
-"""
-
-from __future__ import annotations
-
-import asyncio
-import logging
-from dataclasses import dataclass
+import random
+from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from time import time
-from typing import TYPE_CHECKING
+from typing import Any
 from urllib.parse import urlparse
 
-if TYPE_CHECKING:
-    from typing import Literal
+from research_tool.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ProxyStatus(Enum):
-    """Proxy health status."""
+    """Status of a proxy in the pool."""
 
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
@@ -31,323 +21,181 @@ class ProxyStatus(Enum):
 
 @dataclass
 class Proxy:
-    """Represents a proxy server."""
+    """Represents a proxy server with health tracking."""
 
     url: str
-    username: str | None = None
-    password: str | None = None
     status: ProxyStatus = ProxyStatus.HEALTHY
     failure_count: int = 0
-    success_count: int = 0
     last_used: float = 0.0
-    last_failure: float = 0.0
+    last_failure_reason: str = ""
 
-    def __post_init__(self) -> None:
-        """Extract auth from URL if present."""
-        parsed = urlparse(self.url)
-        if parsed.username and not self.username:
-            self.username = parsed.username
-        if parsed.password and not self.password:
-            self.password = parsed.password
+    def to_playwright(self) -> dict[str, Any]:
+        """Convert to Playwright proxy format.
 
-    @property
-    def base_url(self) -> str:
-        """URL without authentication credentials."""
+        Returns:
+            dict with server, username, password keys
+        """
         parsed = urlparse(self.url)
-        if parsed.username or parsed.password:
-            # Reconstruct URL without auth
-            return f"{parsed.scheme}://{parsed.hostname}:{parsed.port or 80}"
+
+        result: dict[str, Any] = {
+            "server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port or 8080}"
+        }
+
+        if parsed.username:
+            result["username"] = parsed.username
+        if parsed.password:
+            result["password"] = parsed.password
+
+        return result
+
+    def to_httpx(self) -> str:
+        """Convert to httpx proxy format.
+
+        Returns:
+            Proxy URL string
+        """
         return self.url
 
 
 class ProxyManager:
-    """Manages proxy pool with automatic rotation and health checking.
-
-    Supports multiple rotation strategies:
-    - round_robin: Cycle through proxies in order
-    - random: Select random proxy each time
-    - sticky: Same proxy for same domain (session affinity)
-
-    Automatically removes proxies after consecutive failures and
-    re-tests them periodically for recovery.
-    """
+    """Manages proxy pool with automatic rotation and health checking."""
 
     def __init__(
         self,
-        strategy: Literal["round_robin", "random", "sticky"] = "round_robin",
+        proxies: list[str] | None = None,
+        rotation_strategy: str = "round_robin",
         failure_threshold: int = 3,
-        recovery_interval: float = 300.0,  # 5 minutes
-    ) -> None:
+    ):
         """Initialize proxy manager.
 
         Args:
-            strategy: Rotation strategy to use
+            proxies: List of proxy URLs
+            rotation_strategy: round_robin, random, or sticky
             failure_threshold: Failures before marking unhealthy
-            recovery_interval: Seconds before re-testing unhealthy proxies
         """
-        self._proxies: dict[str, Proxy] = {}
-        self._strategy = strategy
-        self._failure_threshold = failure_threshold
-        self._recovery_interval = recovery_interval
+        self.proxies: list[Proxy] = []
+        self.rotation_strategy = rotation_strategy
+        self.failure_threshold = failure_threshold
         self._current_index = 0
-        self._domain_map: dict[str, str] = {}  # domain -> proxy_url for sticky
-        self._lock = asyncio.Lock()
+        self._domain_proxy_map: dict[str, Proxy] = {}
 
-    @property
-    def pool_size(self) -> int:
-        """Number of proxies in pool."""
-        return len(self._proxies)
+        if proxies:
+            for proxy_url in proxies:
+                self.proxies.append(Proxy(url=proxy_url))
 
-    def add_proxy(self, url: str) -> bool:
-        """Add proxy to pool.
+        logger.info(
+            "proxy_manager_initialized",
+            proxy_count=len(self.proxies),
+            rotation_strategy=rotation_strategy,
+        )
 
-        Args:
-            url: Proxy URL (e.g., http://user:pass@proxy:8080)
-
-        Returns:
-            True if added, False if duplicate
-        """
-        if url in self._proxies:
-            return False
-
-        proxy = Proxy(url=url)
-        self._proxies[url] = proxy
-        logger.debug(f"Added proxy to pool: {proxy.base_url}")
-        return True
-
-    def add_proxies(self, urls: list[str]) -> int:
-        """Add multiple proxies to pool.
+    def get_proxy(self, domain: str | None = None) -> Proxy | None:
+        """Get next proxy using configured rotation strategy.
 
         Args:
-            urls: List of proxy URLs
+            domain: Optional domain for sticky sessions
 
         Returns:
-            Number of proxies added (excluding duplicates)
+            Proxy instance or None if no healthy proxies
         """
-        added = 0
-        for url in urls:
-            if self.add_proxy(url):
-                added += 1
-        return added
+        healthy_proxies = [p for p in self.proxies if p.status == ProxyStatus.HEALTHY]
 
-    async def get_proxy(self, domain: str | None = None) -> Proxy | None:
-        """Get next available proxy.
+        if not healthy_proxies:
+            logger.warning("no_healthy_proxies_available")
+            return None
 
-        Args:
-            domain: Target domain (used for sticky sessions)
+        if self.rotation_strategy == "sticky" and domain:
+            return self._get_sticky_proxy(domain, healthy_proxies)
+        elif self.rotation_strategy == "random":
+            return random.choice(healthy_proxies)
+        else:  # round_robin
+            return self._get_round_robin_proxy(healthy_proxies)
 
-        Returns:
-            Proxy object or None if pool exhausted
-        """
-        async with self._lock:
-            healthy = [p for p in self._proxies.values() if p.status == ProxyStatus.HEALTHY]
-
-            if not healthy:
-                logger.warning("No healthy proxies available")
-                return None
-
-            if self._strategy == "sticky" and domain:
-                # Check if we have a sticky session for this domain
-                if domain in self._domain_map:
-                    url = self._domain_map[domain]
-                    proxy = self._proxies.get(url)
-                    if proxy and proxy.status == ProxyStatus.HEALTHY:
-                        proxy.last_used = time()
-                        return proxy
-                    # Sticky proxy unhealthy, assign new one
-                    del self._domain_map[domain]
-
-                # Assign new sticky proxy for domain
-                proxy = self._select_by_strategy(healthy)
-                self._domain_map[domain] = proxy.url
-                proxy.last_used = time()
+    def _get_round_robin_proxy(self, healthy_proxies: list[Proxy]) -> Proxy:
+        """Get next proxy in round-robin order."""
+        # Find the next healthy proxy starting from current index
+        for i in range(len(self.proxies)):
+            idx = (self._current_index + i) % len(self.proxies)
+            proxy = self.proxies[idx]
+            if proxy.status == ProxyStatus.HEALTHY:
+                self._current_index = (idx + 1) % len(self.proxies)
                 return proxy
 
-            proxy = self._select_by_strategy(healthy)
-            proxy.last_used = time()
-            return proxy
+        # Fallback to first healthy (shouldn't reach here)
+        return healthy_proxies[0]
 
-    def _select_by_strategy(self, healthy: list[Proxy]) -> Proxy:
-        """Select proxy based on configured strategy."""
-        if self._strategy == "random":
-            import random
+    def _get_sticky_proxy(self, domain: str, healthy_proxies: list[Proxy]) -> Proxy:
+        """Get same proxy for same domain (sticky session)."""
+        if domain in self._domain_proxy_map:
+            proxy = self._domain_proxy_map[domain]
+            if proxy.status == ProxyStatus.HEALTHY:
+                return proxy
+            # Previous proxy unhealthy, assign new one
+            del self._domain_proxy_map[domain]
 
-            return random.choice(healthy)
-
-        # round_robin (default)
-        self._current_index = self._current_index % len(healthy)
-        proxy = healthy[self._current_index]
-        self._current_index += 1
+        # Assign proxy based on domain hash for consistency
+        idx = hash(domain) % len(healthy_proxies)
+        proxy = healthy_proxies[idx]
+        self._domain_proxy_map[domain] = proxy
         return proxy
 
-    async def mark_failed(self, proxy: Proxy, reason: str) -> None:
-        """Mark proxy as failed.
+    def mark_failed(self, proxy: Proxy, reason: str) -> None:
+        """Mark proxy as failed and update health status.
 
         Args:
             proxy: The proxy that failed
-            reason: Failure reason for logging
+            reason: Reason for failure
         """
-        async with self._lock:
-            proxy.failure_count += 1
-            proxy.last_failure = time()
+        proxy.failure_count += 1
+        proxy.last_failure_reason = reason
 
+        if proxy.failure_count >= self.failure_threshold:
+            proxy.status = ProxyStatus.UNHEALTHY
             logger.warning(
-                f"Proxy failed: {proxy.base_url} ({reason}), "
-                f"failures: {proxy.failure_count}/{self._failure_threshold}"
+                "proxy_marked_unhealthy",
+                proxy_url=proxy.url,
+                failure_count=proxy.failure_count,
+                reason=reason,
+            )
+        else:
+            logger.debug(
+                "proxy_failure_recorded",
+                proxy_url=proxy.url,
+                failure_count=proxy.failure_count,
+                reason=reason,
             )
 
-            if proxy.failure_count >= self._failure_threshold:
-                proxy.status = ProxyStatus.UNHEALTHY
-                logger.error(f"Proxy marked unhealthy: {proxy.base_url}")
-
-                # Remove from sticky sessions
-                domains_to_remove = [
-                    d for d, url in self._domain_map.items() if url == proxy.url
-                ]
-                for domain in domains_to_remove:
-                    del self._domain_map[domain]
-
-    async def mark_success(self, proxy: Proxy) -> None:
-        """Mark proxy as successful.
+    def mark_success(self, proxy: Proxy) -> None:
+        """Mark proxy as successful, resetting failure count.
 
         Args:
             proxy: The proxy that succeeded
         """
-        async with self._lock:
-            proxy.failure_count = 0
-            proxy.success_count += 1
+        proxy.failure_count = 0
+        proxy.status = ProxyStatus.HEALTHY
+        proxy.last_failure_reason = ""
 
-            if proxy.status == ProxyStatus.TESTING:
-                proxy.status = ProxyStatus.HEALTHY
-                logger.info(f"Proxy recovered: {proxy.base_url}")
-
-    async def health_check_all(self) -> dict[str, int]:
-        """Get health status counts.
+    def get_health_stats(self) -> dict[str, int]:
+        """Get health statistics for all proxies.
 
         Returns:
-            Dict with healthy/unhealthy/testing counts
+            dict with healthy, unhealthy, total counts
         """
-        async with self._lock:
-            counts = {"healthy": 0, "unhealthy": 0, "testing": 0}
-            for proxy in self._proxies.values():
-                counts[proxy.status.value] += 1
-            return counts
+        healthy = sum(1 for p in self.proxies if p.status == ProxyStatus.HEALTHY)
+        unhealthy = sum(1 for p in self.proxies if p.status == ProxyStatus.UNHEALTHY)
 
-    def get_httpx_config(self, proxy: Proxy) -> dict[str, str]:
-        """Get httpx-compatible proxy configuration.
-
-        Args:
-            proxy: Proxy to configure
-
-        Returns:
-            Dict suitable for httpx proxies parameter
-        """
         return {
-            "http://": proxy.url,
-            "https://": proxy.url,
+            "healthy": healthy,
+            "unhealthy": unhealthy,
+            "total": len(self.proxies),
         }
 
-    def get_playwright_config(self, proxy: Proxy) -> dict[str, str]:
-        """Get Playwright-compatible proxy configuration.
+    def reset_all(self) -> None:
+        """Reset all proxies to healthy status."""
+        for proxy in self.proxies:
+            proxy.status = ProxyStatus.HEALTHY
+            proxy.failure_count = 0
+            proxy.last_failure_reason = ""
 
-        Args:
-            proxy: Proxy to configure
-
-        Returns:
-            Dict suitable for Playwright proxy parameter
-        """
-        config = {"server": proxy.base_url}
-        if proxy.username:
-            config["username"] = proxy.username
-        if proxy.password:
-            config["password"] = proxy.password
-        return config
-
-    @classmethod
-    def from_list(cls, proxy_list: list[str], **kwargs) -> ProxyManager:
-        """Create manager from list of proxy URLs.
-
-        Args:
-            proxy_list: List of proxy URLs
-            **kwargs: Additional ProxyManager arguments
-
-        Returns:
-            Configured ProxyManager instance
-        """
-        manager = cls(**kwargs)
-        manager.add_proxies(proxy_list)
-        return manager
-
-    @classmethod
-    def from_file(cls, filepath: str, **kwargs) -> ProxyManager:
-        """Create manager from proxy file.
-
-        File format: one proxy URL per line, # for comments.
-
-        Args:
-            filepath: Path to proxy file
-            **kwargs: Additional ProxyManager arguments
-
-        Returns:
-            Configured ProxyManager instance
-        """
-        manager = cls(**kwargs)
-
-        path = Path(filepath)
-        if not path.exists():
-            logger.warning(f"Proxy file not found: {filepath}")
-            return manager
-
-        try:
-            lines = path.read_text().strip().split("\n")
-            proxies = [
-                line.strip()
-                for line in lines
-                if line.strip() and not line.strip().startswith("#")
-            ]
-            manager.add_proxies(proxies)
-            logger.info(f"Loaded {manager.pool_size} proxies from {filepath}")
-        except Exception as e:
-            logger.error(f"Failed to load proxy file: {e}")
-
-        return manager
-
-
-# Global singleton
-_proxy_manager: ProxyManager | None = None
-
-
-def get_proxy_manager() -> ProxyManager | None:
-    """Get global proxy manager instance.
-
-    Returns:
-        ProxyManager if configured, None otherwise
-    """
-    return _proxy_manager
-
-
-def init_proxy_manager(
-    proxy_list: list[str] | None = None,
-    proxy_file: str | None = None,
-    **kwargs,
-) -> ProxyManager:
-    """Initialize global proxy manager.
-
-    Args:
-        proxy_list: List of proxy URLs
-        proxy_file: Path to proxy file
-        **kwargs: Additional ProxyManager arguments
-
-    Returns:
-        Initialized ProxyManager instance
-    """
-    global _proxy_manager
-
-    if proxy_file:
-        _proxy_manager = ProxyManager.from_file(proxy_file, **kwargs)
-    elif proxy_list:
-        _proxy_manager = ProxyManager.from_list(proxy_list, **kwargs)
-    else:
-        _proxy_manager = ProxyManager(**kwargs)
-
-    return _proxy_manager
+        self._domain_proxy_map.clear()
+        logger.info("all_proxies_reset")

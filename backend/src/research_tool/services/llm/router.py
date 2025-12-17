@@ -208,3 +208,27 @@ class LLMRouter:
             List of model names (e.g., ['local-fast', 'local-powerful', 'cloud-best'])
         """
         return list(self._model_info.keys())
+
+
+# Global singleton
+_llm_router: LLMRouter | None = None
+
+
+def get_llm_router() -> LLMRouter | None:
+    """Get global LLM router instance.
+
+    Returns:
+        LLMRouter instance or None if not initialized
+    """
+    return _llm_router
+
+
+def init_llm_router() -> LLMRouter:
+    """Initialize global LLM router.
+
+    Returns:
+        Initialized LLMRouter instance
+    """
+    global _llm_router
+    _llm_router = LLMRouter()
+    return _llm_router

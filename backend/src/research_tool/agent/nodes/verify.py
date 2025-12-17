@@ -1,22 +1,153 @@
 """Cross-verification node for fact checking and contradiction detection.
 
-Implements Phase 5 intelligence feature for:
+Implements LLM-based verification for:
 - Fact extraction from content
 - Cross-source verification
-- Contradiction detection
+- Semantic contradiction detection
 - Confidence scoring based on source agreement
+
+Phase 4 Enhancement: Uses LLM for semantic understanding of contradictions
+instead of simple regex-based pattern matching.
 """
 
+import json
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 
+from research_tool.core.config import settings
 from research_tool.core.logging import get_logger
 from research_tool.models.entities import Fact
 from research_tool.models.state import ResearchState
+from research_tool.services.llm import get_llm_router
 
 logger = get_logger(__name__)
+
+# LLM prompt for contradiction detection
+CONTRADICTION_DETECTION_PROMPT = """You are a fact-checker analyzing statements for contradictions.
+
+Given these facts from different sources, identify:
+1. Direct contradictions (same topic, conflicting claims)
+2. Temporal inconsistencies (dates don't align)
+3. Numerical discrepancies (numbers differ significantly)
+4. Source reliability concerns
+
+Facts to analyze:
+{facts_json}
+
+Respond in JSON format ONLY (no markdown, no explanation):
+{{
+  "contradictions": [
+    {{
+      "fact_indices": [0, 2],
+      "type": "numerical|temporal|semantic|direct",
+      "explanation": "Brief explanation of the contradiction",
+      "resolution": "Which fact appears more reliable and why (or 'uncertain')"
+    }}
+  ],
+  "low_confidence_facts": [1, 5],
+  "high_confidence_facts": [0, 3, 4],
+  "analysis_notes": "Brief overall assessment"
+}}
+
+Be conservative - only flag true contradictions, not minor variations or \
+different perspectives on the same topic."""
+
+
+async def detect_contradictions_llm(
+    facts: list[Fact],
+    model: str = "local-fast"
+) -> dict[str, Any]:
+    """Detect contradictions using LLM semantic analysis.
+
+    Args:
+        facts: List of facts to analyze
+        model: LLM model to use for analysis
+
+    Returns:
+        dict with contradictions, low/high confidence facts, and notes
+    """
+    if len(facts) < 2:
+        return {
+            "contradictions": [],
+            "low_confidence_facts": [],
+            "high_confidence_facts": list(range(len(facts))),
+            "analysis_notes": "Not enough facts to compare"
+        }
+
+    router = get_llm_router()
+    if not router:
+        logger.warning("llm_router_unavailable_for_verification")
+        return {
+            "contradictions": [],
+            "low_confidence_facts": [],
+            "high_confidence_facts": [],
+            "analysis_notes": "LLM router not available"
+        }
+
+    # Prepare facts for LLM (limit to prevent token overflow)
+    facts_for_analysis = facts[:20]  # Max 20 facts per batch
+    facts_json = json.dumps([
+        {
+            "index": i,
+            "statement": f.statement[:500],  # Truncate long statements
+            "sources": f.sources[:3],  # Limit sources shown
+            "confidence": f.confidence
+        }
+        for i, f in enumerate(facts_for_analysis)
+    ], indent=2)
+
+    prompt = CONTRADICTION_DETECTION_PROMPT.format(facts_json=facts_json)
+
+    try:
+        system_msg = "You are a precise fact-checker. Respond only in valid JSON."
+        response = await router.complete(
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": prompt}
+            ],
+            model=model,
+            temperature=0.1,  # Low temperature for consistent analysis
+            max_tokens=2000
+        )
+
+        # Parse JSON response
+        # Handle potential markdown code blocks
+        response_text = response
+        if isinstance(response_text, str):
+            response_text = response_text.strip()
+            if response_text.startswith("```"):
+                # Remove markdown code block
+                lines = response_text.split("\n")
+                response_text = "\n".join(lines[1:-1])
+
+        result = json.loads(response_text)
+
+        logger.info(
+            "llm_contradiction_analysis_complete",
+            contradictions_found=len(result.get("contradictions", [])),
+            model=model
+        )
+
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.warning(f"llm_response_parse_error: {e}")
+        return {
+            "contradictions": [],
+            "low_confidence_facts": [],
+            "high_confidence_facts": [],
+            "analysis_notes": f"Failed to parse LLM response: {e}"
+        }
+    except Exception as e:
+        logger.error(f"llm_contradiction_detection_failed: {e}")
+        return {
+            "contradictions": [],
+            "low_confidence_facts": [],
+            "high_confidence_facts": [],
+            "analysis_notes": f"LLM analysis failed: {e}"
+        }
 
 
 @dataclass
@@ -270,8 +401,11 @@ async def verify_node(state: ResearchState) -> dict[str, Any]:
     LangGraph node that:
     1. Extracts facts from collected content
     2. Cross-references facts across sources
-    3. Detects contradictions
+    3. Detects contradictions (LLM-based if available, regex fallback)
     4. Calculates confidence scores
+
+    Phase 4 Enhancement: Uses LLM for semantic contradiction detection
+    with automatic fallback to regex-based detection.
 
     Args:
         state: Current research state
@@ -299,48 +433,108 @@ async def verify_node(state: ResearchState) -> dict[str, Any]:
         elif isinstance(fd, Fact):
             facts.append(fd)
 
-    # Detect contradictions
-    contradictions = detect_contradictions(facts)
+    # Try LLM-based contradiction detection first
+    llm_analysis: dict[str, Any] | None = None
+    use_llm = settings.llm_enabled if hasattr(settings, 'llm_enabled') else True
+
+    if use_llm and len(facts) >= 2:
+        try:
+            llm_analysis = await detect_contradictions_llm(facts, model="local-fast")
+            logger.info("llm_verification_used")
+        except Exception as e:
+            logger.warning(f"llm_verification_fallback: {e}")
+            llm_analysis = None
+
+    # Fall back to regex-based detection if LLM unavailable or failed
+    if llm_analysis is None or not llm_analysis.get("contradictions"):
+        regex_contradictions = detect_contradictions(facts)
+        # Convert to LLM format for unified processing
+        llm_analysis = {
+            "contradictions": [
+                {
+                    "fact_indices": [
+                        next((i for i, f in enumerate(facts) if f.statement == c["fact1"]), -1),
+                        next((i for i, f in enumerate(facts) if f.statement == c["fact2"]), -1)
+                    ],
+                    "type": c.get("type", "unknown"),
+                    "explanation": c.get("reason", ""),
+                    "resolution": "uncertain"
+                }
+                for c in regex_contradictions
+            ],
+            "low_confidence_facts": [],
+            "high_confidence_facts": [],
+            "analysis_notes": "Regex-based detection (LLM fallback)"
+        }
 
     # Calculate verification results
     verification_results: list[dict[str, Any]] = []
+    contradictions_output: list[dict[str, Any]] = []
+
+    # Track which fact indices have contradictions
+    contradicted_indices: set[int] = set()
+    for c in llm_analysis.get("contradictions", []):
+        indices = c.get("fact_indices", [])
+        contradicted_indices.update(indices)
+        # Build contradiction record for output
+        if len(indices) >= 2 and all(0 <= idx < len(facts) for idx in indices):
+            contradictions_output.append({
+                "fact1": facts[indices[0]].statement,
+                "fact2": facts[indices[1]].statement,
+                "reason": c.get("explanation", "Unknown"),
+                "type": c.get("type", "unknown"),
+                "resolution": c.get("resolution", "uncertain")
+            })
+
+    # Get LLM confidence assessments
+    low_confidence_indices = set(llm_analysis.get("low_confidence_facts", []))
+    high_confidence_indices = set(llm_analysis.get("high_confidence_facts", []))
 
     for i, fact in enumerate(facts):
         # Calculate source agreement
         agreement = calculate_source_agreement(fact)
 
-        # Check if this fact has contradictions
-        fact_contradictions = [
-            c for c in contradictions
-            if fact.statement in (c["fact1"], c["fact2"])
-        ]
-
-        # Adjust confidence based on contradictions
+        # Adjust based on LLM analysis
         final_confidence = agreement
-        if fact_contradictions:
-            # Reduce confidence for contradicted facts
+
+        # Reduce confidence for contradicted facts
+        if i in contradicted_indices:
             final_confidence = max(0.1, final_confidence - 0.3)
+
+        # Apply LLM confidence assessments
+        if i in low_confidence_indices:
+            final_confidence = max(0.1, final_confidence - 0.2)
+        elif i in high_confidence_indices:
+            final_confidence = min(1.0, final_confidence + 0.1)
+
+        # Get contradiction details for this fact
+        fact_contradiction_details = [
+            c["explanation"] for c in llm_analysis.get("contradictions", [])
+            if i in c.get("fact_indices", [])
+        ]
 
         # Create verification result
         result = VerificationResult(
             fact_id=f"fact_{i:03d}",
             original_statement=fact.statement,
-            verified=len(fact_contradictions) == 0 and agreement > 0.5,
+            verified=i not in contradicted_indices and agreement > 0.5,
             confidence=final_confidence,
             supporting_sources=fact.sources,
             contradicting_sources=[],
-            contradiction_details=[c["reason"] for c in fact_contradictions]
+            contradiction_details=fact_contradiction_details
         )
         verification_results.append(result.to_dict())
 
     logger.info(
         "verify_node_complete",
         facts_verified=len(verification_results),
-        contradictions_found=len(contradictions)
+        contradictions_found=len(contradictions_output),
+        analysis_method="llm" if "LLM" not in llm_analysis.get("analysis_notes", "") else "regex"
     )
 
     return {
         "current_phase": "verify",
         "verification_results": verification_results,
-        "contradictions": contradictions
+        "contradictions": contradictions_output,
+        "llm_analysis_notes": llm_analysis.get("analysis_notes", "")
     }

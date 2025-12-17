@@ -1,299 +1,213 @@
-"""Tests for proxy rotation system."""
-
-from unittest.mock import AsyncMock, patch
+"""Unit tests for proxy rotation system."""
 
 import pytest
+from unittest.mock import patch
 
-from research_tool.services.proxy.manager import Proxy, ProxyManager, ProxyStatus
+from research_tool.services.proxy.manager import ProxyManager, Proxy, ProxyStatus
+from research_tool.services.proxy.providers import (
+    EnvironmentProxyProvider,
+    FileProxyProvider,
+)
 
 
 class TestProxy:
     """Test Proxy dataclass."""
 
-    def test_proxy_creation(self) -> None:
-        """Proxy can be created with required fields."""
+    def test_proxy_creation(self):
+        """Test creating a proxy."""
         proxy = Proxy(url="http://proxy1:8080")
         assert proxy.url == "http://proxy1:8080"
         assert proxy.status == ProxyStatus.HEALTHY
         assert proxy.failure_count == 0
-        assert proxy.success_count == 0
 
-    def test_proxy_with_auth(self) -> None:
-        """Proxy can include authentication."""
-        proxy = Proxy(
-            url="http://user:pass@proxy1:8080",
-            username="user",
-            password="pass",
-        )
-        assert proxy.username == "user"
-        assert proxy.password == "pass"
-
-    def test_proxy_status_transitions(self) -> None:
-        """Proxy status can transition between states."""
-        proxy = Proxy(url="http://proxy1:8080")
-        assert proxy.status == ProxyStatus.HEALTHY
-
-        proxy.status = ProxyStatus.UNHEALTHY
-        assert proxy.status == ProxyStatus.UNHEALTHY
-
-        proxy.status = ProxyStatus.TESTING
-        assert proxy.status == ProxyStatus.TESTING
+    def test_proxy_with_auth(self):
+        """Test proxy with authentication."""
+        proxy = Proxy(url="http://user:pass@proxy1:8080")
+        assert "user:pass" in proxy.url
 
 
 class TestProxyManager:
     """Test ProxyManager class."""
 
-    def test_manager_empty_pool(self) -> None:
-        """Manager can be created with empty pool."""
-        manager = ProxyManager()
-        assert manager.pool_size == 0
-
-    def test_manager_add_proxy(self) -> None:
-        """Manager can add proxies to pool."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-        assert manager.pool_size == 1
-
-    def test_manager_add_multiple_proxies(self) -> None:
-        """Manager can add multiple proxies."""
-        manager = ProxyManager()
-        manager.add_proxies([
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-            "http://proxy3:8080",
-        ])
-        assert manager.pool_size == 3
-
-    def test_manager_no_duplicate_proxies(self) -> None:
-        """Manager rejects duplicate proxy URLs."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-        manager.add_proxy("http://proxy1:8080")
-        assert manager.pool_size == 1
-
-    @pytest.mark.asyncio
-    async def test_get_proxy_returns_healthy(self) -> None:
-        """get_proxy returns a healthy proxy."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-        assert proxy is not None
-        assert proxy.url == "http://proxy1:8080"
-        assert proxy.status == ProxyStatus.HEALTHY
-
-    @pytest.mark.asyncio
-    async def test_get_proxy_empty_pool_returns_none(self) -> None:
-        """get_proxy returns None when pool is empty."""
-        manager = ProxyManager()
-        proxy = await manager.get_proxy()
-        assert proxy is None
-
-    @pytest.mark.asyncio
-    async def test_get_proxy_round_robin(self) -> None:
-        """get_proxy rotates through proxies in round-robin."""
-        manager = ProxyManager(strategy="round_robin")
-        manager.add_proxies([
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-            "http://proxy3:8080",
-        ])
-
-        # Should cycle through all proxies
-        urls = []
-        for _ in range(6):
-            proxy = await manager.get_proxy()
-            urls.append(proxy.url)
-
-        # Each proxy should appear twice
-        assert urls.count("http://proxy1:8080") == 2
-        assert urls.count("http://proxy2:8080") == 2
-        assert urls.count("http://proxy3:8080") == 2
-
-    @pytest.mark.asyncio
-    async def test_mark_failed_increments_count(self) -> None:
-        """mark_failed increments failure count."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-        await manager.mark_failed(proxy, "connection timeout")
-
-        assert proxy.failure_count == 1
-
-    @pytest.mark.asyncio
-    async def test_mark_failed_removes_after_threshold(self) -> None:
-        """mark_failed removes proxy after 3 consecutive failures."""
-        manager = ProxyManager(failure_threshold=3)
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-
-        # Fail 3 times
-        await manager.mark_failed(proxy, "timeout")
-        await manager.mark_failed(proxy, "timeout")
-        await manager.mark_failed(proxy, "timeout")
-
-        assert proxy.status == ProxyStatus.UNHEALTHY
-        # Should not be returned by get_proxy
-        assert await manager.get_proxy() is None
-
-    @pytest.mark.asyncio
-    async def test_mark_success_resets_failure_count(self) -> None:
-        """mark_success resets failure count to zero."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-        await manager.mark_failed(proxy, "timeout")
-        await manager.mark_failed(proxy, "timeout")
-        assert proxy.failure_count == 2
-
-        await manager.mark_success(proxy)
-        assert proxy.failure_count == 0
-        assert proxy.success_count == 1
-
-    @pytest.mark.asyncio
-    async def test_mark_success_recovers_unhealthy(self) -> None:
-        """mark_success can recover an unhealthy proxy in testing state."""
-        manager = ProxyManager(failure_threshold=3)
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-
-        # Make unhealthy
-        for _ in range(3):
-            await manager.mark_failed(proxy, "timeout")
-        assert proxy.status == ProxyStatus.UNHEALTHY
-
-        # Manually set to testing (simulating health check)
-        proxy.status = ProxyStatus.TESTING
-
-        # Success should recover it
-        await manager.mark_success(proxy)
-        assert proxy.status == ProxyStatus.HEALTHY
-
-    @pytest.mark.asyncio
-    async def test_get_proxy_skips_unhealthy(self) -> None:
-        """get_proxy skips unhealthy proxies."""
-        manager = ProxyManager(failure_threshold=3)
-        manager.add_proxies([
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-        ])
-
-        # Make first proxy unhealthy
-        proxy1 = await manager.get_proxy()
-        for _ in range(3):
-            await manager.mark_failed(proxy1, "timeout")
-
-        # Should only return proxy2 now
-        for _ in range(3):
-            proxy = await manager.get_proxy()
-            assert proxy.url == "http://proxy2:8080"
-
-    @pytest.mark.asyncio
-    async def test_health_check_all(self) -> None:
-        """health_check_all returns status counts."""
-        manager = ProxyManager(failure_threshold=3)
-        manager.add_proxies([
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-            "http://proxy3:8080",
-        ])
-
-        # Make one unhealthy
-        proxy = await manager.get_proxy()
-        for _ in range(3):
-            await manager.mark_failed(proxy, "timeout")
-
-        status = await manager.health_check_all()
-        assert status["healthy"] == 2
-        assert status["unhealthy"] == 1
-
-    @pytest.mark.asyncio
-    async def test_sticky_session_returns_same_proxy(self) -> None:
-        """Sticky sessions return same proxy for same domain."""
-        manager = ProxyManager(strategy="sticky")
-        manager.add_proxies([
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-        ])
-
-        # Same domain should get same proxy
-        proxy1 = await manager.get_proxy(domain="example.com")
-        proxy2 = await manager.get_proxy(domain="example.com")
-        assert proxy1.url == proxy2.url
-
-        # Different domain may get different proxy
-        proxy3 = await manager.get_proxy(domain="other.com")
-        # (may or may not be same, just testing no crash)
-        assert proxy3 is not None
-
-
-class TestProxyManagerFromConfig:
-    """Test ProxyManager configuration loading."""
-
-    def test_from_list(self) -> None:
-        """Manager can be created from proxy list."""
-        proxy_list = [
-            "http://proxy1:8080",
-            "http://proxy2:8080",
-        ]
-        manager = ProxyManager.from_list(proxy_list)
-        assert manager.pool_size == 2
-
-    def test_from_file(self, tmp_path) -> None:
-        """Manager can be created from proxy file."""
-        proxy_file = tmp_path / "proxies.txt"
-        proxy_file.write_text(
-            "http://proxy1:8080\n"
-            "http://proxy2:8080\n"
-            "# This is a comment\n"
-            "http://proxy3:8080\n"
+    @pytest.fixture
+    def manager(self):
+        """Create a proxy manager with test proxies."""
+        return ProxyManager(
+            proxies=[
+                "http://proxy1:8080",
+                "http://proxy2:8080",
+                "http://proxy3:8080",
+            ],
+            rotation_strategy="round_robin",
+            failure_threshold=3,
         )
 
-        manager = ProxyManager.from_file(str(proxy_file))
-        assert manager.pool_size == 3
+    def test_manager_initialization(self, manager):
+        """Test manager initializes with proxies."""
+        assert len(manager.proxies) == 3
+        assert all(p.status == ProxyStatus.HEALTHY for p in manager.proxies)
 
-    def test_from_file_empty(self, tmp_path) -> None:
-        """Manager handles empty proxy file."""
+    def test_manager_empty_proxies(self):
+        """Test manager with no proxies returns None."""
+        manager = ProxyManager(proxies=[])
+        assert manager.get_proxy() is None
+
+    def test_get_proxy_round_robin(self, manager):
+        """Test round-robin rotation."""
+        proxy1 = manager.get_proxy()
+        proxy2 = manager.get_proxy()
+        proxy3 = manager.get_proxy()
+        proxy4 = manager.get_proxy()
+
+        assert proxy1.url == "http://proxy1:8080"
+        assert proxy2.url == "http://proxy2:8080"
+        assert proxy3.url == "http://proxy3:8080"
+        assert proxy4.url == "http://proxy1:8080"  # Wraps around
+
+    def test_get_proxy_random(self):
+        """Test random rotation."""
+        manager = ProxyManager(
+            proxies=["http://proxy1:8080", "http://proxy2:8080"],
+            rotation_strategy="random",
+        )
+        proxy = manager.get_proxy()
+        assert proxy is not None
+        assert proxy.url in ["http://proxy1:8080", "http://proxy2:8080"]
+
+    def test_mark_failed_increments_count(self, manager):
+        """Test marking proxy as failed."""
+        proxy = manager.get_proxy()
+        manager.mark_failed(proxy, "connection_timeout")
+
+        assert proxy.failure_count == 1
+        assert proxy.status == ProxyStatus.HEALTHY
+
+    def test_mark_failed_exceeds_threshold(self, manager):
+        """Test proxy marked unhealthy after threshold."""
+        proxy = manager.get_proxy()
+
+        for _ in range(3):
+            manager.mark_failed(proxy, "connection_timeout")
+
+        assert proxy.failure_count == 3
+        assert proxy.status == ProxyStatus.UNHEALTHY
+
+    def test_unhealthy_proxy_skipped(self, manager):
+        """Test unhealthy proxies are skipped in rotation."""
+        proxy1 = manager.get_proxy()
+        for _ in range(3):
+            manager.mark_failed(proxy1, "banned")
+
+        proxy2 = manager.get_proxy()
+        assert proxy2.url == "http://proxy2:8080"
+
+    def test_mark_success_resets_failure_count(self, manager):
+        """Test successful request resets failure count."""
+        proxy = manager.get_proxy()
+        manager.mark_failed(proxy, "timeout")
+        manager.mark_failed(proxy, "timeout")
+        assert proxy.failure_count == 2
+
+        manager.mark_success(proxy)
+        assert proxy.failure_count == 0
+        assert proxy.status == ProxyStatus.HEALTHY
+
+    def test_all_proxies_unhealthy_returns_none(self, manager):
+        """Test returns None when all proxies unhealthy."""
+        for proxy in manager.proxies:
+            for _ in range(3):
+                manager.mark_failed(proxy, "banned")
+
+        assert manager.get_proxy() is None
+
+    def test_health_check_stats(self, manager):
+        """Test health check returns correct stats."""
+        proxy = manager.get_proxy()
+        for _ in range(3):
+            manager.mark_failed(proxy, "banned")
+
+        stats = manager.get_health_stats()
+        assert stats["healthy"] == 2
+        assert stats["unhealthy"] == 1
+        assert stats["total"] == 3
+
+    def test_sticky_session_for_domain(self):
+        """Test sticky session returns same proxy for domain."""
+        manager = ProxyManager(
+            proxies=["http://proxy1:8080", "http://proxy2:8080"],
+            rotation_strategy="sticky",
+        )
+
+        proxy1 = manager.get_proxy(domain="example.com")
+        proxy2 = manager.get_proxy(domain="example.com")
+
+        assert proxy1.url == proxy2.url
+
+    def test_to_playwright_format(self):
+        """Test conversion to Playwright proxy format."""
+        proxy = Proxy(url="http://user:pass@proxy1:8080")
+        pw_proxy = proxy.to_playwright()
+
+        assert pw_proxy["server"] == "http://proxy1:8080"
+        assert pw_proxy["username"] == "user"
+        assert pw_proxy["password"] == "pass"
+
+    def test_to_httpx_format(self):
+        """Test conversion to httpx proxy format."""
+        proxy = Proxy(url="http://proxy1:8080")
+        httpx_proxy = proxy.to_httpx()
+
+        assert httpx_proxy == "http://proxy1:8080"
+
+
+class TestEnvironmentProxyProvider:
+    """Test loading proxies from environment."""
+
+    def test_load_from_env_string(self):
+        """Test loading comma-separated proxy list."""
+        with patch.dict(
+            "os.environ",
+            {"PROXY_LIST": "http://p1:8080,http://p2:8080,http://p3:8080"},
+        ):
+            provider = EnvironmentProxyProvider()
+            proxies = provider.get_proxies()
+
+            assert len(proxies) == 3
+            assert proxies[0] == "http://p1:8080"
+
+    def test_load_empty_env(self):
+        """Test empty environment returns empty list."""
+        with patch.dict("os.environ", {}, clear=True):
+            provider = EnvironmentProxyProvider()
+            proxies = provider.get_proxies()
+            assert proxies == []
+
+
+class TestFileProxyProvider:
+    """Test loading proxies from file."""
+
+    def test_load_from_file(self, tmp_path):
+        """Test loading proxies from file."""
         proxy_file = tmp_path / "proxies.txt"
+        proxy_file.write_text("http://p1:8080\nhttp://p2:8080\n# comment\nhttp://p3:8080")
+
+        provider = FileProxyProvider(str(proxy_file))
+        proxies = provider.get_proxies()
+
+        assert len(proxies) == 3
+        assert "http://p1:8080" in proxies
+
+    def test_file_not_found(self):
+        """Test missing file returns empty list."""
+        provider = FileProxyProvider("/nonexistent/proxies.txt")
+        proxies = provider.get_proxies()
+        assert proxies == []
+
+    def test_empty_file(self, tmp_path):
+        """Test empty file returns empty list."""
+        proxy_file = tmp_path / "empty.txt"
         proxy_file.write_text("")
 
-        manager = ProxyManager.from_file(str(proxy_file))
-        assert manager.pool_size == 0
-
-    def test_from_file_not_found(self) -> None:
-        """Manager handles missing proxy file gracefully."""
-        manager = ProxyManager.from_file("/nonexistent/proxies.txt")
-        assert manager.pool_size == 0
-
-
-class TestProxyManagerIntegration:
-    """Integration tests for proxy manager with HTTP clients."""
-
-    @pytest.mark.asyncio
-    async def test_get_httpx_proxy_config(self) -> None:
-        """Manager returns httpx-compatible proxy config."""
-        manager = ProxyManager()
-        manager.add_proxy("http://proxy1:8080")
-
-        proxy = await manager.get_proxy()
-        config = manager.get_httpx_config(proxy)
-
-        assert "http://" in config or "https://" in config
-        assert config.get("http://") == "http://proxy1:8080"
-
-    @pytest.mark.asyncio
-    async def test_get_playwright_proxy_config(self) -> None:
-        """Manager returns Playwright-compatible proxy config."""
-        manager = ProxyManager()
-        manager.add_proxy("http://user:pass@proxy1:8080")
-
-        proxy = await manager.get_proxy()
-        config = manager.get_playwright_config(proxy)
-
-        assert config["server"] == "http://proxy1:8080"
-        assert config["username"] == "user"
-        assert config["password"] == "pass"
+        provider = FileProxyProvider(str(proxy_file))
+        proxies = provider.get_proxies()
+        assert proxies == []

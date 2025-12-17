@@ -38,6 +38,12 @@ class ResearchState(TypedDict, total=False):
     should_stop: bool
     stop_reason: str | None
 
+    # Cycle tracking (Phase 5 enhancement)
+    current_cycle: int
+    cycle_history: list[dict[str, Any]]  # History of SaturationMetrics per cycle
+    entities_before_cycle: int  # Entity count at start of current cycle
+    facts_before_cycle: int  # Fact count at start of current cycle
+
     # Output
     final_report: dict[str, Any] | None
     export_path: str | None
