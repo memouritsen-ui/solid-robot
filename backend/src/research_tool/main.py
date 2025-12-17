@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
-from research_tool.api.routes import export, health, research
+from research_tool.api.routes import export, health, library, research
 from research_tool.api.websocket import chat_websocket, progress_handler
 from research_tool.core import Settings, get_logger
 from research_tool.utils.profiling import (
@@ -79,6 +79,7 @@ app.add_middleware(TimingMiddleware, callback=create_timing_callback())
 app.include_router(health.router)
 app.include_router(research.router)
 app.include_router(export.router)
+app.include_router(library.router)
 
 
 # Note: /api/health endpoints are now in health.router
