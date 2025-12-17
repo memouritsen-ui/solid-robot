@@ -193,6 +193,133 @@ struct HealthResponse: Codable {
     let version: String?
 }
 
+// MARK: - Library Response Models
+
+/// Response from GET /api/library/sessions
+struct LibrarySessionListResponse: Codable {
+    let sessions: [LibrarySessionSummary]
+    let total: Int
+    let offset: Int
+    let limit: Int
+}
+
+/// Summary of a session in the library
+struct LibrarySessionSummary: Codable, Identifiable {
+    let sessionId: String
+    let query: String
+    let domain: String
+    let status: String
+    let factsCount: Int
+    let sourcesCount: Int
+    let confidenceScore: Double?
+    let startedAt: String?
+    let completedAt: String?
+
+    var id: String { sessionId }
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case query
+        case domain
+        case status
+        case factsCount = "facts_count"
+        case sourcesCount = "sources_count"
+        case confidenceScore = "confidence_score"
+        case startedAt = "started_at"
+        case completedAt = "completed_at"
+    }
+
+    /// Format started_at as readable date
+    var formattedDate: String {
+        guard let dateString = startedAt else { return "Unknown" }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: dateString) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .medium
+            displayFormatter.timeStyle = .short
+            return displayFormatter.string(from: date)
+        }
+        return dateString
+    }
+}
+
+/// Full session detail from GET /api/library/sessions/{id}
+struct LibrarySessionDetail: Codable {
+    let sessionId: String
+    let query: String
+    let domain: String
+    let privacyMode: String
+    let status: String
+    let summary: String?
+    let facts: [[String: AnyCodableValue]]
+    let sources: [[String: AnyCodableValue]]
+    let entities: [String]
+    let confidenceScore: Double?
+    let startedAt: String
+    let completedAt: String?
+    let saturationMetrics: [String: AnyCodableValue]?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case query
+        case domain
+        case privacyMode = "privacy_mode"
+        case status
+        case summary
+        case facts
+        case sources
+        case entities
+        case confidenceScore = "confidence_score"
+        case startedAt = "started_at"
+        case completedAt = "completed_at"
+        case saturationMetrics = "saturation_metrics"
+    }
+}
+
+/// Search result from GET /api/library/search
+struct LibrarySearchResult: Codable, Identifiable {
+    let sessionId: String
+    let query: String
+    let summary: String?
+    let startedAt: String
+    let rank: Double
+
+    var id: String { sessionId }
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case query
+        case summary
+        case startedAt = "started_at"
+        case rank
+    }
+}
+
+/// Response from GET /api/library/search
+struct LibrarySearchResponse: Codable {
+    let results: [LibrarySearchResult]
+    let query: String
+    let total: Int
+}
+
+/// Response from GET /api/library/stats
+struct LibraryStatsResponse: Codable {
+    let totalSessions: Int
+    let totalFacts: Int
+    let totalSources: Int
+    let completedSessions: Int
+    let averageConfidence: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case totalSessions = "total_sessions"
+        case totalFacts = "total_facts"
+        case totalSources = "total_sources"
+        case completedSessions = "completed_sessions"
+        case averageConfidence = "average_confidence"
+    }
+}
+
 /// Response from GET /api/health/detailed
 struct DetailedHealthResponse: Codable {
     let status: String
@@ -445,6 +572,97 @@ class APIClient {
         return try await get(path: "/api/health/detailed", timeout: 10)
     }
 
+    // MARK: - Library Endpoints
+
+    /// List all sessions in the library with pagination
+    /// GET /api/library/sessions
+    func listLibrarySessions(offset: Int = 0, limit: Int = 20) async throws -> LibrarySessionListResponse {
+        return try await get(
+            path: "/api/library/sessions?offset=\(offset)&limit=\(limit)",
+            timeout: defaultTimeout
+        )
+    }
+
+    /// Get full details of a library session
+    /// GET /api/library/sessions/{id}
+    func getLibrarySession(sessionId: String) async throws -> LibrarySessionDetail {
+        return try await get(
+            path: "/api/library/sessions/\(sessionId)",
+            timeout: defaultTimeout
+        )
+    }
+
+    /// Delete a session from the library
+    /// DELETE /api/library/sessions/{id}
+    func deleteLibrarySession(sessionId: String) async throws -> [String: String] {
+        return try await delete(
+            path: "/api/library/sessions/\(sessionId)",
+            timeout: defaultTimeout
+        )
+    }
+
+    /// Search library using full-text search
+    /// GET /api/library/search
+    func searchLibrary(query: String, limit: Int = 20) async throws -> LibrarySearchResponse {
+        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        return try await get(
+            path: "/api/library/search?q=\(encodedQuery)&limit=\(limit)",
+            timeout: defaultTimeout
+        )
+    }
+
+    /// Get library statistics
+    /// GET /api/library/stats
+    func getLibraryStats() async throws -> LibraryStatsResponse {
+        return try await get(path: "/api/library/stats", timeout: defaultTimeout)
+    }
+
+    /// Save a completed research session to the library
+    /// POST /api/library/sessions
+    func saveToLibrary(
+        sessionId: String,
+        query: String,
+        domain: String,
+        privacyMode: String,
+        status: String,
+        summary: String?,
+        facts: [[String: Any]],
+        sources: [[String: Any]],
+        entities: [String],
+        confidenceScore: Double?,
+        startedAt: Date?,
+        completedAt: Date?
+    ) async throws -> [String: String] {
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        var body: [String: Any] = [
+            "session_id": sessionId,
+            "query": query,
+            "domain": domain,
+            "privacy_mode": privacyMode,
+            "status": status,
+            "facts": facts,
+            "sources": sources,
+            "entities": entities
+        ]
+
+        if let summary = summary {
+            body["summary"] = summary
+        }
+        if let confidence = confidenceScore {
+            body["confidence_score"] = confidence
+        }
+        if let started = startedAt {
+            body["started_at"] = dateFormatter.string(from: started)
+        }
+        if let completed = completedAt {
+            body["completed_at"] = dateFormatter.string(from: completed)
+        }
+
+        return try await post(path: "/api/library/sessions", body: body, timeout: defaultTimeout)
+    }
+
     // MARK: - Generic Request Helpers
 
     private func get<T: Decodable>(path: String, timeout: TimeInterval) async throws -> T {
@@ -473,6 +691,18 @@ class APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = timeout
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        return try await execute(request)
+    }
+
+    private func delete<T: Decodable>(path: String, timeout: TimeInterval) async throws -> T {
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.timeoutInterval = timeout
 
         return try await execute(request)
     }
