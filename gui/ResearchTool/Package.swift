@@ -24,13 +24,16 @@ let package = Package(
                 "Services/KeychainService.swift",
                 "ViewModels/ChatViewModel.swift",
                 "ViewModels/ResearchViewModel.swift",
+                "ViewModels/LibraryViewModel.swift",
                 "Views/ChatView.swift",
                 "Views/MainView.swift",
                 "Views/MessageBubble.swift",
                 "Views/PrivacyModePicker.swift",
                 "Views/SettingsView.swift",
                 "Views/ExportView.swift",
-                "Views/ResearchView.swift"
+                "Views/ResearchView.swift",
+                "Views/LibraryView.swift",
+                "Views/SessionDetailView.swift"
             ]
         )
     ]

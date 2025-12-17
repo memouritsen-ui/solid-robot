@@ -441,7 +441,7 @@ class APIClient {
 
     // MARK: - Initialization
 
-    private init(baseURL: String = "http://localhost:8002") {
+    private init(baseURL: String = "http://localhost:8000") {
         self.baseURL = baseURL
     }
 
