@@ -521,7 +521,7 @@ class TestGracefulDegradation:
                 }
             ],
             "facts_extracted": [
-                {"fact": "Test fact", "confidence": 0.7, "source": "test"}
+                {"statement": "Test fact", "confidence": 0.7, "source": "test"}
             ],
             "current_phase": "analyze",
             "errors": ["tavily failed", "brave failed"],  # Record failures
