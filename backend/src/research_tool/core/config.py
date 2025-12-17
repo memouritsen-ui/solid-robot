@@ -50,6 +50,25 @@ class Settings(BaseSettings):
     # Paths
     data_dir: str = "./data"
 
+    # Proxy Configuration
+    proxy_enabled: bool = False
+    proxy_list: str = ""  # Comma-separated list of proxies
+    proxy_file: str | None = None  # Path to proxy file
+    proxy_rotation_strategy: str = "round_robin"  # round_robin, random, sticky
+    proxy_failure_threshold: int = 3  # Failures before marking unhealthy
+    proxy_health_check_interval: int = 300  # Seconds between health checks
+
+    # robots.txt Configuration
+    robots_enabled: bool = True
+    robots_cache_ttl: int = 86400  # 24 hours
+    robots_user_agent: str = "SolidRobotBot/1.0"
+    robots_allow_on_error: bool = True  # Allow if robots.txt fetch fails
+
+    # Session Persistence Configuration
+    session_persistence_enabled: bool = False
+    session_storage_path: str = "./data/sessions.db"
+    session_max_age: int = 604800  # 7 days in seconds
+
     @field_validator("anthropic_api_key")
     @classmethod
     def validate_anthropic_key(cls, v: str | None) -> str | None:
@@ -101,6 +120,18 @@ class Settings(BaseSettings):
             "unpaywall": (
                 FeatureStatus.ENABLED if self.unpaywall_email
                 else FeatureStatus.DEGRADED
+            ),
+            "proxy_rotation": (
+                FeatureStatus.ENABLED if self.proxy_enabled and (self.proxy_list or self.proxy_file)
+                else FeatureStatus.DISABLED
+            ),
+            "robots_compliance": (
+                FeatureStatus.ENABLED if self.robots_enabled
+                else FeatureStatus.DISABLED
+            ),
+            "session_persistence": (
+                FeatureStatus.ENABLED if self.session_persistence_enabled
+                else FeatureStatus.DISABLED
             ),
         }
 
@@ -215,6 +246,10 @@ class Settings(BaseSettings):
             "port": self.port,
             "debug": self.debug,
             "data_dir": self.data_dir,
+            "proxy_enabled": self.proxy_enabled,
+            "proxy_rotation_strategy": self.proxy_rotation_strategy,
+            "robots_enabled": self.robots_enabled,
+            "session_persistence_enabled": self.session_persistence_enabled,
         }
 
 

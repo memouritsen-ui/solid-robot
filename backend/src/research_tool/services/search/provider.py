@@ -2,10 +2,16 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from contextlib import asynccontextmanager
 from functools import wraps
 from typing import Any, TypeVar
+from urllib.parse import urlparse
 
+import httpx
+
+from research_tool.core.config import settings
 from research_tool.core.logging import get_logger
+from research_tool.services.proxy import get_proxy_manager
 from research_tool.utils.circuit_breaker import get_circuit_breaker
 
 logger = get_logger(__name__)
@@ -174,3 +180,60 @@ class SearchProvider(ABC):
             "failures": cb.failures,
             "failure_threshold": cb.failure_threshold
         }
+
+    @asynccontextmanager
+    async def get_http_client(
+        self,
+        target_url: str | None = None,
+        timeout: float = 30.0,
+        **kwargs: Any
+    ):
+        """Get httpx client with optional proxy support.
+
+        Usage:
+            async with self.get_http_client("https://api.example.com") as client:
+                response = await client.get("/endpoint")
+
+        Args:
+            target_url: Target URL for proxy domain mapping
+            timeout: Request timeout in seconds
+            **kwargs: Additional httpx.AsyncClient arguments
+
+        Yields:
+            httpx.AsyncClient configured with proxy if enabled
+        """
+        proxy_manager = get_proxy_manager()
+        current_proxy = None
+        proxy_config = None
+
+        # Get proxy if enabled
+        if proxy_manager and settings.proxy_enabled and target_url:
+            domain = urlparse(target_url).netloc
+            current_proxy = await proxy_manager.get_proxy(domain=domain)
+            if current_proxy:
+                proxy_config = proxy_manager.get_httpx_config(current_proxy)
+                logger.debug(
+                    "http_client_using_proxy",
+                    provider=self.name,
+                    proxy=current_proxy.base_url
+                )
+
+        # Build client options
+        client_kwargs = {
+            "timeout": timeout,
+            **kwargs
+        }
+        if proxy_config:
+            client_kwargs["proxies"] = proxy_config
+
+        async with httpx.AsyncClient(**client_kwargs) as client:
+            try:
+                yield client
+                # Track success
+                if proxy_manager and current_proxy:
+                    await proxy_manager.mark_success(current_proxy)
+            except Exception as e:
+                # Track failure
+                if proxy_manager and current_proxy:
+                    await proxy_manager.mark_failed(current_proxy, str(type(e).__name__))
+                raise

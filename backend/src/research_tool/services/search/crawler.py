@@ -30,6 +30,7 @@ from research_tool.core.exceptions import (
     TimeoutError,
 )
 from research_tool.core.logging import get_logger
+from research_tool.services.proxy import get_proxy_manager
 
 from .provider import SearchProvider
 from .rate_limiter import rate_limiter
@@ -108,23 +109,49 @@ class PlaywrightCrawler(SearchProvider):
         self._user_agent_index += 1
         return ua
 
-    async def _ensure_browser(self) -> Browser:
-        """Ensure browser is running, start if needed."""
+    async def _ensure_browser(self, proxy_config: dict | None = None) -> Browser:
+        """Ensure browser is running, start if needed.
+
+        Args:
+            proxy_config: Optional Playwright proxy configuration dict
+        """
         if self._browser is None or not self._browser.is_connected():
             playwright = await async_playwright().start()
-            self._browser = await playwright.chromium.launch(
-                headless=self.headless,
-                args=[
+
+            launch_options = {
+                "headless": self.headless,
+                "args": [
                     "--disable-blink-features=AutomationControlled",
                     "--disable-dev-shm-usage",
                     "--no-sandbox",
-                ]
-            )
+                ],
+            }
+
+            # Add proxy if configured
+            if proxy_config:
+                launch_options["proxy"] = proxy_config
+                logger.debug("browser_using_proxy", proxy=proxy_config.get("server"))
+
+            self._browser = await playwright.chromium.launch(**launch_options)
         return self._browser
 
-    async def _create_stealth_page(self) -> Page:
-        """Create a new page with stealth settings."""
-        browser = await self._ensure_browser()
+    async def _create_stealth_page(self, target_domain: str | None = None) -> Page:
+        """Create a new page with stealth settings.
+
+        Args:
+            target_domain: Target domain for proxy sticky sessions
+        """
+        # Get proxy configuration if available
+        proxy_config = None
+        proxy_manager = get_proxy_manager()
+        current_proxy = None
+
+        if proxy_manager and settings.proxy_enabled:
+            current_proxy = await proxy_manager.get_proxy(domain=target_domain)
+            if current_proxy:
+                proxy_config = proxy_manager.get_playwright_config(current_proxy)
+
+        browser = await self._ensure_browser(proxy_config)
 
         context = await browser.new_context(
             user_agent=self._get_user_agent(),
@@ -135,6 +162,9 @@ class PlaywrightCrawler(SearchProvider):
             java_script_enabled=True,
             bypass_csp=True,
         )
+
+        # Store proxy reference for success/failure tracking
+        context._current_proxy = current_proxy  # type: ignore[attr-defined]
 
         page = await context.new_page()
 
@@ -179,9 +209,14 @@ class PlaywrightCrawler(SearchProvider):
             AccessDeniedError: If access is denied (403, 401)
             RateLimitError: If rate limited (429)
         """
+        from urllib.parse import urlparse
+
         await rate_limiter.acquire(self.name, self.requests_per_second)
 
-        page = await self._create_stealth_page()
+        # Extract domain for proxy sticky sessions
+        domain = urlparse(url).netloc
+
+        page = await self._create_stealth_page(target_domain=domain)
 
         try:
             logger.info("crawler_fetch_start", url=url)
@@ -231,6 +266,12 @@ class PlaywrightCrawler(SearchProvider):
                 content_length=len(extracted) if extracted else 0
             )
 
+            # Track proxy success
+            proxy_manager = get_proxy_manager()
+            current_proxy = getattr(page.context, "_current_proxy", None)
+            if proxy_manager and current_proxy:
+                await proxy_manager.mark_success(current_proxy)
+
             return {
                 "url": url,
                 "title": title or "",
@@ -241,8 +282,22 @@ class PlaywrightCrawler(SearchProvider):
             }
 
         except PlaywrightTimeout as e:
+            # Track proxy failure
+            proxy_manager = get_proxy_manager()
+            current_proxy = getattr(page.context, "_current_proxy", None)
+            if proxy_manager and current_proxy:
+                await proxy_manager.mark_failed(current_proxy, "timeout")
+
             logger.warning("crawler_timeout", url=url, error=str(e))
             raise TimeoutError(f"Timeout fetching {url}") from e
+
+        except (AccessDeniedError, RateLimitError) as e:
+            # Track proxy failure for access issues
+            proxy_manager = get_proxy_manager()
+            current_proxy = getattr(page.context, "_current_proxy", None)
+            if proxy_manager and current_proxy:
+                await proxy_manager.mark_failed(current_proxy, str(type(e).__name__))
+            raise
 
         finally:
             await page.context.close()
