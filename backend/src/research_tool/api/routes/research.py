@@ -1,5 +1,6 @@
 """Research API endpoints."""
 
+import traceback
 import uuid
 from datetime import datetime
 from typing import Any
@@ -29,10 +30,18 @@ async def run_research_workflow(session_id: str, initial_state: dict[str, Any]) 
         logger.info("research_workflow_start", session_id=session_id)
 
         # Create graph
+        logger.debug("creating_research_graph", session_id=session_id)
         graph = create_research_graph()
+        logger.debug("graph_created", session_id=session_id)
 
         # Run workflow
         config = {"configurable": {"thread_id": session_id}}
+        logger.info(
+            "invoking_graph",
+            session_id=session_id,
+            state_keys=list(initial_state.keys())
+        )
+
         final_state = await graph.ainvoke(initial_state, config=config)
 
         # Update session
@@ -46,9 +55,17 @@ async def run_research_workflow(session_id: str, initial_state: dict[str, Any]) 
         )
 
     except Exception as e:
-        logger.error("research_workflow_failed", session_id=session_id, error=str(e))
+        # Capture full traceback for debugging
+        tb = traceback.format_exc()
+        logger.error(
+            "research_workflow_failed",
+            session_id=session_id,
+            error=str(e),
+            error_type=type(e).__name__,
+            traceback=tb
+        )
         active_sessions[session_id]["status"] = "failed"
-        active_sessions[session_id]["error"] = str(e)
+        active_sessions[session_id]["error"] = f"{type(e).__name__}: {str(e)}\n{tb}"
 
 
 @router.post("/start")
