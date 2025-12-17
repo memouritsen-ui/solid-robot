@@ -1,68 +1,82 @@
 # SOLID-ROBOT TODO
 
-## NUVÆRENDE STATUS (2025-12-10)
+## CURRENT STATUS (2025-12-17)
 
-| Fase | Status | Commits |
-|------|--------|---------|
-| Fase 1: Foundation Fix | ✅ DONE | `a086899` - `5feef74` |
-| Fase 2: Provider Integration | ✅ DONE | `bbcf3c9` - `8dd6d80` |
-| Fase 3: Pipeline Nodes | ✅ DONE | `0eb3343` - `df8e2a3` |
-| Fase 4: Production Hardening | ✅ DONE | `3cd9213` |
-
-**Merge commit:** `ea61826` (pushed to origin/main)
+| Metric | Status |
+|--------|--------|
+| Unit Tests | 586 passed, 19 failed (97%) |
+| Ruff | Clean |
+| Mypy | Clean |
+| Core Pipeline | **WORKING** |
 
 ---
 
-## HVAD ER GJORT
+## COMPLETED PHASES
 
-### Fase 1: Foundation Fix
-- [x] Task 1.1: BackendLauncher path resolution (4-priority fallback)
-- [x] Task 1.2: `.env.example` med dokumentation
-- [x] Task 1.3: Config validation at startup
-- [x] Task 1.4: Deep health check endpoints
-- [x] Task 1.5: Startup self-test suite
+### Phase 1: Foundation Fix ✅
+- [x] BackendLauncher path resolution
+- [x] `.env.example` with documentation
+- [x] Config validation at startup
+- [x] Deep health check endpoints
+- [x] Startup self-test suite
 
-### Fase 2: Provider Integration
-- [x] Task 2.1: Circuit breaker i base `SearchProvider`
-- [x] Task 2.2: Alle 8 providers opdateret til `_do_search()`
+### Phase 2: Provider Integration ✅
+- [x] Circuit breaker in base `SearchProvider`
+- [x] All 8 providers updated to `_do_search()`
 
-### Fase 3: Pipeline Nodes (KRITISK - var placeholders)
-- [x] Task 2.3: `process.py` - LLM-baseret fakta-ekstraktion
-- [x] Task 2.4: `analyze.py` - Cross-reference og contradiction detection
-- [x] Task 3.1: `synthesize.py` - LLM-baseret rapport generering
+### Phase 3: Pipeline Nodes ✅
+- [x] `process.py` - LLM-based fact extraction
+- [x] `analyze.py` - Cross-reference and contradiction detection
+- [x] `synthesize.py` - LLM-based report generation
 
----
-
-### Fase 4: Production Hardening
-- [x] Task 4.1: E2E test suite (`tests/e2e/test_research_workflow.py`)
-- [x] Task 4.2: Verify all tests pass (ruff + mypy clean)
+### Phase 4: Production Hardening (Partial) ⚠️
+- [x] E2E test suite created
+- [ ] **19 unit tests need updating** (testing old placeholder behavior)
 
 ---
 
-## NY SESSION - START HER
+## ACTIVE WORK
 
-1. **Læs først:**
-   ```
-   CLAUDE.md                                          # Commandments + regler
-   docs/plans/2025-12-10-professional-research-scraper.md  # Master plan (linje 2988+ for Fase 4)
-   ```
+### Fix Failing Tests (19 total)
 
-2. **Verifikér status:**
-   ```bash
-   cd /Users/madsbruusgaard-mouritsen/SOLID-ROBOT/backend
-   uv run ruff check src/
-   uv run python -m mypy src/ --ignore-missing-imports
-   git log --oneline -15
-   ```
-
-3. **Fortsæt med Fase 4** fra planen
+| Test File | Failures | Issue |
+|-----------|----------|-------|
+| `test_provider.py` | 7 | MockSearchProvider needs `_do_search()` |
+| `test_process.py` | 5 | Tests expect old placeholder behavior |
+| `test_synthesize.py` | 5 | Tests expect old placeholder behavior |
+| `test_edge_cases.py` | 2 | Tests expect old behavior |
 
 ---
 
-## ARKIV
+## FUTURE WORK
 
-Gamle vildledende docs er i `archive/2025-12-09-before-fix/`
+### Priority 2: Complete Placeholders
+- [ ] `verify.py` - Upgrade regex to LLM-based verification
+- [ ] `evaluate.py` - Track saturation across cycles
+
+### Priority 3: Professional Scraper Features
+- [ ] Proxy rotation
+- [ ] robots.txt compliance
+- [ ] Persistent session storage
+- [ ] Distributed crawling support
 
 ---
 
-*Sidst opdateret: 2025-12-10 efter Fase 4 completion*
+## QUICK START
+
+```bash
+cd /Users/madsbruusgaard-mouritsen/solid-robot/backend
+
+# Run tests
+uv run python -m pytest tests/ -q --tb=no
+
+# Check lint
+uv run ruff check src/
+
+# Start server
+uv run uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8000
+```
+
+---
+
+*Last updated: 2025-12-17*
