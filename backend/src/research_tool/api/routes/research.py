@@ -19,6 +19,28 @@ router = APIRouter(prefix="/api/research", tags=["research"])
 active_sessions: dict[str, dict[str, Any]] = {}
 
 
+@router.get("/")
+@router.get("")
+async def list_sessions() -> list[dict[str, Any]]:
+    """List all active research sessions.
+
+    Returns:
+        list: All session summaries
+    """
+    return [
+        {
+            "session_id": session_id,
+            "status": data["status"],
+            "query": data["state"].get("original_query", ""),
+            "current_phase": data["state"].get("current_phase"),
+            "started_at": data["state"].get("started_at").isoformat()
+            if data["state"].get("started_at")
+            else None,
+        }
+        for session_id, data in active_sessions.items()
+    ]
+
+
 async def run_research_workflow(session_id: str, initial_state: dict[str, Any]) -> None:
     """Run research workflow in background.
 
