@@ -8,10 +8,10 @@
 | analyze.py | **WORKING** | Cross-reference + contradiction detection |
 | synthesize.py | **WORKING** | LLM-based report generation |
 | Circuit breaker | **INTEGRATED** | In all search providers |
-| Unit Tests | **97% passing** | 586/605 pass (19 need test updates) |
+| Unit Tests | **100% passing** | 617/617 pass |
 | Ruff/Mypy | **CLEAN** | No issues |
 
-**NOTE**: The 19 failing tests are testing OLD placeholder behavior. The implementation is correct - tests need updating.
+**All core pipeline components are working. Tests validated against real LLM-based implementation.**
 
 ---
 
@@ -120,17 +120,11 @@ curl http://localhost:8000/api/health/detailed | python -m json.tool
 
 ## REMAINING WORK
 
-### Priority 1: Fix 19 failing tests
-- `test_provider.py` - MockSearchProvider needs `_do_search()` not `search()`
-- `test_process.py` - Tests need content in entities + LLM mocking
-- `test_synthesize.py` - Tests need LLM mocking
-- `test_edge_cases.py` - Tests need behavior updates
-
-### Priority 2: Complete placeholders
+### Priority 1: Complete placeholders
 - `verify.py` - Upgrade from regex to LLM-based verification
 - `evaluate.py` - Track saturation across cycles properly
 
-### Priority 3: Professional features
+### Priority 2: Professional features
 - Proxy rotation
 - robots.txt compliance
 - Persistent session storage
