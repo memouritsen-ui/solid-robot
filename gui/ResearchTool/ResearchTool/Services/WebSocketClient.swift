@@ -14,6 +14,7 @@ protocol WebSocketClientDelegate: AnyObject {
 
 /// WebSocket client for real-time chat communication with the backend.
 /// Handles connection lifecycle, message sending, and streaming token reception.
+/// Includes automatic reconnection and keepalive ping.
 final class WebSocketClient: NSObject, @unchecked Sendable {
 
     // MARK: - Types
@@ -45,11 +46,26 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
 
     weak var delegate: WebSocketClientDelegate?
 
+    // Reconnection properties
+    private var isIntentionalDisconnect = false
+    private var reconnectAttempts = 0
+    private let maxReconnectAttempts = 10
+    private var reconnectTask: Task<Void, Never>?
+
+    // Keepalive properties
+    private var pingTask: Task<Void, Never>?
+    private let pingInterval: TimeInterval = 30  // Send ping every 30 seconds
+
     // MARK: - Initialization
 
-    init(baseURL: String = "ws://localhost:8002") {
+    init(baseURL: String = "ws://localhost:8000") {
         self.baseURL = baseURL
         super.init()
+    }
+
+    deinit {
+        reconnectTask?.cancel()
+        pingTask?.cancel()
     }
 
     // MARK: - Connection Management
@@ -57,6 +73,8 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
     /// Connect to the WebSocket server
     func connect() {
         guard webSocket == nil else { return }
+
+        isIntentionalDisconnect = false
 
         guard let url = URL(string: "\(baseURL)/ws/chat") else {
             Task { @MainActor in
@@ -70,10 +88,17 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
         webSocket?.resume()
 
         startReceiving()
+        startPingTimer()
     }
 
     /// Disconnect from the WebSocket server
     func disconnect() {
+        isIntentionalDisconnect = true
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        pingTask?.cancel()
+        pingTask = nil
+
         webSocket?.cancel(with: .goingAway, reason: nil)
         webSocket = nil
         session = nil
@@ -85,7 +110,79 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
 
     /// Check if currently connected
     var isConnected: Bool {
-        webSocket != nil
+        webSocket != nil && webSocket?.state == .running
+    }
+
+    // MARK: - Reconnection
+
+    private func scheduleReconnect() {
+        guard !isIntentionalDisconnect else { return }
+        guard reconnectAttempts < maxReconnectAttempts else {
+            print("[WebSocket] Max reconnect attempts reached")
+            return
+        }
+
+        reconnectAttempts += 1
+
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
+        let delay = min(pow(2.0, Double(reconnectAttempts - 1)), 30.0)
+        print("[WebSocket] Scheduling reconnect attempt \(reconnectAttempts) in \(delay)s")
+
+        reconnectTask = Task {
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+
+            guard !Task.isCancelled && !isIntentionalDisconnect else { return }
+
+            // Clear old connection
+            webSocket = nil
+            session = nil
+
+            // Attempt reconnect
+            connect()
+        }
+    }
+
+    private func resetReconnectAttempts() {
+        reconnectAttempts = 0
+        reconnectTask?.cancel()
+        reconnectTask = nil
+    }
+
+    // MARK: - Keepalive Ping
+
+    private func startPingTimer() {
+        pingTask?.cancel()
+
+        pingTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(pingInterval * 1_000_000_000))
+
+                guard !Task.isCancelled, let ws = webSocket else { break }
+
+                ws.sendPing { [weak self] error in
+                    if let error = error {
+                        print("[WebSocket] Ping failed: \(error.localizedDescription)")
+                        // Connection likely dead, trigger reconnect
+                        self?.handleConnectionLost()
+                    }
+                }
+            }
+        }
+    }
+
+    private func handleConnectionLost() {
+        guard !isIntentionalDisconnect else { return }
+
+        pingTask?.cancel()
+        webSocket?.cancel(with: .abnormalClosure, reason: nil)
+        webSocket = nil
+        session = nil
+
+        Task { @MainActor in
+            delegate?.webSocketDidDisconnect()
+        }
+
+        scheduleReconnect()
     }
 
     // MARK: - Message Sending
@@ -112,6 +209,8 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
                 Task { @MainActor in
                     self?.delegate?.webSocketDidReceiveError("Failed to send: \(error.localizedDescription)")
                 }
+                // Connection might be broken
+                self?.handleConnectionLost()
             }
         }
     }
@@ -125,9 +224,11 @@ final class WebSocketClient: NSObject, @unchecked Sendable {
                 self?.handleMessage(message)
                 self?.startReceiving()  // Continue receiving
             case .failure(let error):
+                print("[WebSocket] Receive error: \(error.localizedDescription)")
                 Task { @MainActor in
                     self?.delegate?.webSocketDidFail(error: error)
                 }
+                self?.handleConnectionLost()
             }
         }
     }
@@ -207,6 +308,9 @@ extension WebSocketClient: URLSessionWebSocketDelegate {
         webSocketTask: URLSessionWebSocketTask,
         didOpenWithProtocol protocol: String?
     ) {
+        print("[WebSocket] Connected successfully")
+        resetReconnectAttempts()
+
         Task { @MainActor in
             delegate?.webSocketDidConnect()
         }
@@ -218,9 +322,35 @@ extension WebSocketClient: URLSessionWebSocketDelegate {
         didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
         reason: Data?
     ) {
+        print("[WebSocket] Closed with code: \(closeCode.rawValue)")
         webSocket = nil
+        pingTask?.cancel()
+
         Task { @MainActor in
             delegate?.webSocketDidDisconnect()
+        }
+
+        // Auto-reconnect if not intentional
+        if !isIntentionalDisconnect {
+            scheduleReconnect()
+        }
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didCompleteWithError error: Error?
+    ) {
+        if let error = error {
+            print("[WebSocket] Connection error: \(error.localizedDescription)")
+            Task { @MainActor in
+                delegate?.webSocketDidFail(error: error)
+            }
+
+            // Auto-reconnect on error
+            if !isIntentionalDisconnect {
+                scheduleReconnect()
+            }
         }
     }
 }
