@@ -30,7 +30,9 @@ from research_tool.core.exceptions import (
     TimeoutError,
 )
 from research_tool.core.logging import get_logger
+from research_tool.services.compliance import get_robots_checker
 from research_tool.services.proxy import get_proxy_manager
+from research_tool.services.session import get_session_storage
 
 from .provider import SearchProvider
 from .rate_limiter import rate_limiter
@@ -153,18 +155,35 @@ class PlaywrightCrawler(SearchProvider):
 
         browser = await self._ensure_browser(proxy_config)
 
-        context = await browser.new_context(
-            user_agent=self._get_user_agent(),
-            viewport={"width": 1920, "height": 1080},
-            locale="en-US",
-            timezone_id="America/New_York",
+        # Load stored session if available
+        storage_state = None
+        session_storage = get_session_storage()
+        if session_storage and settings.session_persistence_enabled and target_domain:
+            session_data = await session_storage.load_session(target_domain)
+            if session_data:
+                storage_state = session_storage.to_playwright_state(session_data)
+                logger.debug(f"session_loaded: {target_domain}")
+
+        context_options = {
+            "user_agent": self._get_user_agent(),
+            "viewport": {"width": 1920, "height": 1080},
+            "locale": "en-US",
+            "timezone_id": "America/New_York",
             # Stealth settings
-            java_script_enabled=True,
-            bypass_csp=True,
-        )
+            "java_script_enabled": True,
+            "bypass_csp": True,
+        }
+
+        # Apply stored session state
+        if storage_state:
+            context_options["storage_state"] = storage_state
+
+        context = await browser.new_context(**context_options)
 
         # Store proxy reference for success/failure tracking
         context._current_proxy = current_proxy  # type: ignore[attr-defined]
+        # Store domain for session saving
+        context._target_domain = target_domain  # type: ignore[attr-defined]
 
         page = await context.new_page()
 
@@ -211,10 +230,42 @@ class PlaywrightCrawler(SearchProvider):
         """
         from urllib.parse import urlparse
 
-        await rate_limiter.acquire(self.name, self.requests_per_second)
-
-        # Extract domain for proxy sticky sessions
+        # Extract domain once for rate limiting, robots, and proxy
         domain = urlparse(url).netloc
+
+        # Check robots.txt compliance if enabled
+        if self.respect_robots and settings.robots_enabled:
+            robots_checker = get_robots_checker()
+            if robots_checker:
+                can_fetch = await robots_checker.can_fetch(
+                    url,
+                    user_agent=settings.robots_user_agent
+                )
+                if not can_fetch:
+                    logger.info(
+                        "crawler_blocked_by_robots",
+                        url=url,
+                        user_agent=settings.robots_user_agent
+                    )
+                    raise AccessDeniedError(f"Blocked by robots.txt: {url}")
+
+                # Respect crawl-delay if specified (pass full URL, not just domain)
+                crawl_delay = await robots_checker.get_crawl_delay(url)
+                if crawl_delay is not None and crawl_delay > 0:
+                    # Store crawl-delay in rate limiter for domain coordination
+                    rate_limiter.set_crawl_delay(domain, crawl_delay)
+                    # Use the larger of crawl-delay or our rate limit
+                    effective_rps = min(
+                        self.requests_per_second,
+                        1.0 / crawl_delay
+                    )
+                    await rate_limiter.acquire(self.name, effective_rps, domain=domain)
+                else:
+                    await rate_limiter.acquire(self.name, self.requests_per_second, domain=domain)
+            else:
+                await rate_limiter.acquire(self.name, self.requests_per_second, domain=domain)
+        else:
+            await rate_limiter.acquire(self.name, self.requests_per_second, domain=domain)
 
         page = await self._create_stealth_page(target_domain=domain)
 
@@ -271,6 +322,20 @@ class PlaywrightCrawler(SearchProvider):
             current_proxy = getattr(page.context, "_current_proxy", None)
             if proxy_manager and current_proxy:
                 await proxy_manager.mark_success(current_proxy)
+
+            # Save session for future requests
+            session_storage = get_session_storage()
+            target_domain = getattr(page.context, "_target_domain", None)
+            if session_storage and settings.session_persistence_enabled and target_domain:
+                try:
+                    storage_state = await page.context.storage_state()
+                    session_data = session_storage.from_playwright_state(
+                        target_domain, storage_state
+                    )
+                    await session_storage.save_session(session_data)
+                    logger.debug(f"session_saved: {target_domain}")
+                except Exception as e:
+                    logger.warning(f"session_save_failed: {target_domain} - {e}")
 
             return {
                 "url": url,
