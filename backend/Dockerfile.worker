@@ -29,6 +29,6 @@ ENV PYTHONPATH=/app/src
 # Default worker concurrency from environment
 ENV CELERY_WORKER_CONCURRENCY=2
 
-# Run Celery worker
-CMD ["uv", "run", "celery", "-A", "research_tool.services.distributed.celery_app:app", "worker", \
-     "--loglevel=info", "--concurrency=${CELERY_WORKER_CONCURRENCY}"]
+# Run Celery worker (shell form to expand env vars)
+CMD uv run celery -A research_tool.services.distributed.celery_app:app worker \
+    --loglevel=info --concurrency=${CELERY_WORKER_CONCURRENCY:-2}
