@@ -27,7 +27,7 @@ class AppState: ObservableObject {
     let appVersion: String = "1.0.0"
 
     /// Backend URL
-    let backendURL: String = "ws://localhost:8002/ws/chat"
+    let backendURL: String = "ws://localhost:8000/ws/chat"
 
     // MARK: - User Preferences
 

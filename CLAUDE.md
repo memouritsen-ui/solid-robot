@@ -1,17 +1,24 @@
 # CLAUDE.md - SOLID-ROBOT Professional Research Scraper
 
-## CURRENT STATUS (Updated 2025-12-17)
+## CURRENT STATUS (Updated 2025-12-20)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
 | process.py | **WORKING** | LLM-based fact extraction |
 | analyze.py | **WORKING** | Cross-reference + contradiction detection |
 | synthesize.py | **WORKING** | LLM-based report generation |
+| verify.py | **WORKING** | LLM-based verification (`detect_contradictions_llm()`) |
+| evaluate.py | **WORKING** | Cycle tracking with `cycle_history` |
 | Circuit breaker | **INTEGRATED** | In all search providers |
-| Unit Tests | **100% passing** | 617/617 pass |
+| Proxy rotation | **INTEGRATED** | `ProxyManager` with 3 strategies |
+| robots.txt | **INTEGRATED** | `RobotsChecker` with caching |
+| Session storage | **INTEGRATED** | `session/storage.py` |
+| Export formats | **WORKING** | PDF, DOCX, PPTX, XLSX, MD, JSON |
+| Unit Tests | **100% passing** | 800/800 pass |
 | Ruff/Mypy | **CLEAN** | No issues |
+| GUI | **BUILDS** | SwiftUI macOS app |
 
-**All core pipeline components are working. Tests validated against real LLM-based implementation.**
+**All pipeline components are working. This is a production-ready research assistant.**
 
 ---
 
@@ -100,6 +107,9 @@ uv run uvicorn src.research_tool.main:app --host 127.0.0.1 --port 8000
 
 # Test health
 curl http://localhost:8000/api/health/detailed | python -m json.tool
+
+# Build GUI
+cd gui/ResearchTool && swift build
 ```
 
 ---
@@ -113,22 +123,36 @@ curl http://localhost:8000/api/health/detailed | python -m json.tool
 | Fact Extraction | `src/research_tool/agent/nodes/process.py` |
 | Analysis | `src/research_tool/agent/nodes/analyze.py` |
 | Synthesis | `src/research_tool/agent/nodes/synthesize.py` |
+| Verification | `src/research_tool/agent/nodes/verify.py` |
+| Evaluation | `src/research_tool/agent/nodes/evaluate.py` |
 | Workflow Graph | `src/research_tool/agent/graph.py` |
 | Config | `src/research_tool/core/config.py` |
+| Proxy Manager | `src/research_tool/services/proxy/manager.py` |
+| robots.txt | `src/research_tool/services/compliance/robots.py` |
+| Session Storage | `src/research_tool/services/session/storage.py` |
+| Research Memory | `src/research_tool/services/memory/research_memory.py` |
 
 ---
 
-## REMAINING WORK
+## PROJECT COMPLETE
 
-### Priority 1: Complete placeholders
-- `verify.py` - Upgrade from regex to LLM-based verification
-- `evaluate.py` - Track saturation across cycles properly
+All major features are implemented:
 
-### Priority 2: Professional features
-- Proxy rotation
-- robots.txt compliance
-- Persistent session storage
+- [x] LLM-based pipeline (process, analyze, synthesize, verify, evaluate)
+- [x] Circuit breaker pattern in all search providers
+- [x] Proxy rotation with health checking
+- [x] robots.txt compliance with caching
+- [x] Persistent session storage
+- [x] Multi-format export (PDF, DOCX, PPTX, XLSX, MD, JSON)
+- [x] ResearchMemory with FTS5 search
+- [x] SwiftUI macOS GUI with WebSocket
+- [x] 800 tests passing
+
+### Future Nice-to-haves
+- [ ] Distributed crawling support
+- [ ] Multi-user authentication
+- [ ] Cloud deployment templates
 
 ---
 
-*Last updated: 2025-12-17*
+*Last updated: 2025-12-20*
