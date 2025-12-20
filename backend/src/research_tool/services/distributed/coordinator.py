@@ -1,6 +1,7 @@
 """Coordinator for distributed crawling."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from celery import group
 from celery.result import GroupResult
@@ -133,7 +134,7 @@ class CrawlCoordinator:
             }
 
         success = sum(1 for r in results if r.get("status") == "success")
-        workers = set(r.get("worker_id") for r in results if r.get("worker_id"))
+        workers = {r.get("worker_id") for r in results if r.get("worker_id")}
 
         return {
             "total": len(results),

@@ -1,7 +1,7 @@
 """Celery tasks for distributed crawling."""
 
 import socket
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from celery import Task
@@ -78,7 +78,7 @@ def crawl_url(
             "url": url,
             "session_id": session_id,
             "worker_id": worker_id,
-            "crawled_at": datetime.now(timezone.utc).isoformat(),
+            "crawled_at": datetime.now(UTC).isoformat(),
             **result,
         }
 
@@ -90,5 +90,5 @@ def crawl_url(
             "session_id": session_id,
             "worker_id": worker_id,
             "error": str(e),
-            "crawled_at": datetime.now(timezone.utc).isoformat(),
+            "crawled_at": datetime.now(UTC).isoformat(),
         }

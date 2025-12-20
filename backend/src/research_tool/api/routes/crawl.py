@@ -1,6 +1,5 @@
 """Crawl API endpoints for distributed and local crawling."""
 
-import asyncio
 import uuid
 from typing import Any
 
