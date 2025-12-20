@@ -17,6 +17,7 @@
 | Unit Tests | **100% passing** | 800/800 pass |
 | Ruff/Mypy | **CLEAN** | No issues |
 | GUI | **BUILDS** | SwiftUI macOS app |
+| Distributed Crawling | **WORKING** | Celery + Redis, Docker compose |
 
 **All pipeline components are working. This is a production-ready research assistant.**
 
@@ -110,6 +111,11 @@ curl http://localhost:8000/api/health/detailed | python -m json.tool
 
 # Build GUI
 cd gui/ResearchTool && swift build
+
+# Start distributed crawling (Docker)
+./scripts/start-distributed.sh 4  # 4 workers
+# or manually:
+docker compose -f docker-compose.distributed.yml up -d
 ```
 
 ---
@@ -131,6 +137,11 @@ cd gui/ResearchTool && swift build
 | robots.txt | `src/research_tool/services/compliance/robots.py` |
 | Session Storage | `src/research_tool/services/session/storage.py` |
 | Research Memory | `src/research_tool/services/memory/research_memory.py` |
+| Distributed Config | `src/research_tool/services/distributed/config.py` |
+| Celery App | `src/research_tool/services/distributed/celery_app.py` |
+| Crawl Tasks | `src/research_tool/services/distributed/tasks.py` |
+| Crawl Coordinator | `src/research_tool/services/distributed/coordinator.py` |
+| Batch Crawl API | `src/research_tool/api/routes/crawl.py` |
 
 ---
 
@@ -146,10 +157,10 @@ All major features are implemented:
 - [x] Multi-format export (PDF, DOCX, PPTX, XLSX, MD, JSON)
 - [x] ResearchMemory with FTS5 search
 - [x] SwiftUI macOS GUI with WebSocket
-- [x] 800 tests passing
+- [x] 800+ tests passing
+- [x] Distributed crawling with Celery + Redis
 
 ### Future Nice-to-haves
-- [ ] Distributed crawling support
 - [ ] Multi-user authentication
 - [ ] Cloud deployment templates
 
