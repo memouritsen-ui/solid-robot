@@ -25,8 +25,11 @@ def _fetch_url(url: str, options: dict) -> dict[str, Any]:
 
     async def _async_fetch() -> dict[str, Any]:
         crawler = PlaywrightCrawler()
-        result = await crawler.fetch_url(url)
-        return result
+        try:
+            result = await crawler.fetch_page(url)
+            return result
+        finally:
+            await crawler.close()
 
     loop = asyncio.new_event_loop()
     try:

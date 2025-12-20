@@ -1,6 +1,6 @@
 """Tests for distributed crawl API endpoints."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -40,10 +40,11 @@ class TestCrawlBatchEndpoint:
             "research_tool.api.routes.crawl.PlaywrightCrawler"
         ) as mock_crawler:
             mock_instance = MagicMock()
-            mock_instance.fetch_url.return_value = {
+            mock_instance.fetch_page = AsyncMock(return_value={
                 "content": "Test content",
                 "title": "Test",
-            }
+            })
+            mock_instance.close = AsyncMock()
             mock_crawler.return_value = mock_instance
 
             client = TestClient(app)
@@ -53,7 +54,7 @@ class TestCrawlBatchEndpoint:
             )
 
             assert response.status_code == 200
-            mock_instance.fetch_url.assert_called_once()
+            mock_instance.fetch_page.assert_called_once()
 
     def test_crawl_batch_distributed_true_uses_coordinator(self) -> None:
         """Batch endpoint with distributed=True uses CrawlCoordinator."""

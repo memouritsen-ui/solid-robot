@@ -89,13 +89,16 @@ async def batch_crawl(request: BatchCrawlRequest) -> BatchCrawlResponse:
         crawler = PlaywrightCrawler()
         results = []
 
-        for url in request.urls:
-            try:
-                result = await crawler.fetch_url(url)
-                results.append({"status": "success", "url": url, **result})
-            except Exception as e:
-                logger.error("local_crawl_error", url=url, error=str(e))
-                results.append({"status": "failed", "url": url, "error": str(e)})
+        try:
+            for url in request.urls:
+                try:
+                    result = await crawler.fetch_page(url)
+                    results.append({"status": "success", "url": url, **result})
+                except Exception as e:
+                    logger.error("local_crawl_error", url=url, error=str(e))
+                    results.append({"status": "failed", "url": url, "error": str(e)})
+        finally:
+            await crawler.close()
 
         return BatchCrawlResponse(
             session_id=session_id,

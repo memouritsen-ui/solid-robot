@@ -6,7 +6,7 @@ services:
     image: redis:7-alpine
     container_name: solid-robot-redis
     ports:
-      - "6379:6379"
+      - "6381:6379"  # Use 6381 externally to avoid conflicts
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
