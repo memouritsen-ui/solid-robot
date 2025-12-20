@@ -1,6 +1,7 @@
 """Distributed crawling with Celery + Redis."""
 
 from research_tool.services.distributed.config import DistributedConfig
+from research_tool.services.distributed.coordinator import CrawlCoordinator
 
 _config: DistributedConfig | None = None
 
@@ -27,6 +28,7 @@ def is_distributed_available() -> bool:
 
 
 __all__ = [
+    "CrawlCoordinator",
     "DistributedConfig",
     "get_distributed_config",
     "is_distributed_available",
