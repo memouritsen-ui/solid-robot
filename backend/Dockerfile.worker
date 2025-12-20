@@ -1,0 +1,34 @@
+# Celery worker for distributed crawling
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies for Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for fast dependency management
+RUN pip install uv
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies with distributed extras
+RUN uv sync --extra distributed --frozen --no-dev
+
+# Install Playwright browsers
+RUN uv run playwright install chromium --with-deps
+
+# Copy source code
+COPY src/ ./src/
+
+# Set Python path
+ENV PYTHONPATH=/app/src
+
+# Default worker concurrency from environment
+ENV CELERY_WORKER_CONCURRENCY=2
+
+# Run Celery worker
+CMD ["uv", "run", "celery", "-A", "research_tool.services.distributed.celery_app:app", "worker", \
+     "--loglevel=info", "--concurrency=${CELERY_WORKER_CONCURRENCY}"]
