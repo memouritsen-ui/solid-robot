@@ -88,7 +88,14 @@ async def run_full_research(query: str, output_path: Path) -> dict:
 
 
 if __name__ == "__main__":
-    query = "EU drone logistics startups and companies 2024"
-    output = Path("data/reports/full_drone_research.json")
+    import sys
+    if len(sys.argv) > 1:
+        query = " ".join(sys.argv[1:])
+    else:
+        query = "EU drone logistics startups and companies 2024"
+
+    # Generate output filename from query
+    safe_name = query[:50].replace(" ", "_").replace("/", "-")
+    output = Path(f"data/reports/full_{safe_name}.json")
 
     asyncio.run(run_full_research(query, output))
